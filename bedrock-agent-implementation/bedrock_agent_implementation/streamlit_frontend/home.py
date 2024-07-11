@@ -104,46 +104,47 @@ def main():
     if 'session_id' not in st.session_state:
         st.session_state.session_id = session_generator()
 
-    # Taking user input
-    user_prompt = st.text_input("Message:")
+    if st.session_state["authentication_status"]:
+        # Taking user input
+        user_prompt = st.text_input("Message:")
 
-    if user_prompt:
-        try:
-            # Add the user's prompt to the conversation state
-            st.session_state.conversation.append({'user': user_prompt})
+        if user_prompt:
+            try:
+                # Add the user's prompt to the conversation state
+                st.session_state.conversation.append({'user': user_prompt})
 
-            # Format and add the answer to the conversation state
-            response = client.invoke_agent(
-                agentId=BEDROCK_AGENT_ID,
-                agentAliasId=BEDROCK_AGENT_ALIAS,
-                sessionId=st.session_state.session_id,
-                endSession=False,
-                inputText=user_prompt
-            )
-            results = response.get("completion")
-            answer = ""
-            for stream in results:
-                answer += process_stream(stream)
-            st.session_state.conversation.append(
-                {'assistant': answer})
+                # Format and add the answer to the conversation state
+                response = client.invoke_agent(
+                    agentId=BEDROCK_AGENT_ID,
+                    agentAliasId=BEDROCK_AGENT_ALIAS,
+                    sessionId=st.session_state.session_id,
+                    endSession=False,
+                    inputText=user_prompt
+                )
+                results = response.get("completion")
+                answer = ""
+                for stream in results:
+                    answer += process_stream(stream)
+                st.session_state.conversation.append(
+                    {'assistant': answer})
 
-        except Exception as e:
-            # Display an error message if an exception occurs
-            st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
-            print(f"ERROR: Exception when calling MultiRouteChain: {e}")
-            formatted_answer = f"Error occurred: {e}"
-            st.session_state.conversation.append(
-                {'assistant': formatted_answer})
+            except Exception as e:
+                # Display an error message if an exception occurs
+                st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
+                print(f"ERROR: Exception when calling MultiRouteChain: {e}")
+                formatted_answer = f"Error occurred: {e}"
+                st.session_state.conversation.append(
+                    {'assistant': formatted_answer})
 
-    # Display the conversation
-    for interaction in st.session_state.conversation:
-        with st.container():
-            if 'user' in interaction:
-                # Apply a custom color to the "User" alias using inline CSS
-                st.markdown(f'<span style="color: #4A90E2; font-weight: bold;">User:</span> {interaction["user"]}', unsafe_allow_html=True)
-            else:
-                # Apply a different custom color to the "Assistant" alias using inline CSS
-                st.markdown(f'<span style="color: #50E3C2; font-weight: bold;">Assistant:</span> {interaction["assistant"]}', unsafe_allow_html=True)
+        # Display the conversation
+        for interaction in st.session_state.conversation:
+            with st.container():
+                if 'user' in interaction:
+                    # Apply a custom color to the "User" alias using inline CSS
+                    st.markdown(f'<span style="color: #4A90E2; font-weight: bold;">User:</span> {interaction["user"]}', unsafe_allow_html=True)
+                else:
+                    # Apply a different custom color to the "Assistant" alias using inline CSS
+                    st.markdown(f'<span style="color: #50E3C2; font-weight: bold;">Assistant:</span> {interaction["assistant"]}', unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
