@@ -31,33 +31,35 @@ if st.session_state["authentication_status"]:
     st.write(f'Welcome *{st.session_state["name"]}*')
     st.title('Conversational AI - Plant Technician')
 
-    # Password reset widget
-    try:
-        if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
-            st.success('Password modified successfully')
-    except Exception as e:
-        st.error(e)
+    with st.sidebar:
+        # Password reset widget
+        try:
+            if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
+                st.success('Password modified successfully')
+        except Exception as e:
+            st.error(e)
 
-    # Update user details widget
-    try:
-        if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
-            st.success('Entries updated successfully')
-    except Exception as e:
-        st.error(e)
+        # Update user details widget
+        try:
+            if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
+                st.success('Entries updated successfully')
+        except Exception as e:
+            st.error(e)
 
 elif st.session_state["authentication_status"] is False:
     st.error('Username/password is incorrect')
 
-    # Forgotten password widget
-    try:
-        username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
-        if username_forgot_pw:
-            st.success('New password sent securely')
-            # Random password to be transferred to user securely
-        elif username_forgot_pw == False:
-            st.error('Username not found')
-    except Exception as e:
-        st.error(e)
+    if st.button('Forgot Password?'):
+        # Forgotten password widget
+        try:
+            username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
+            if username_forgot_pw:
+                st.success('New password sent securely')
+                # Random password to be transferred to user securely
+            elif username_forgot_pw == False:
+                st.error('Username not found')
+        except Exception as e:
+            st.error(e)
 
     # Forgotten username widget
     try:
