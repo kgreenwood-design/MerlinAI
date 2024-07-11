@@ -76,7 +76,7 @@ def main():
     usernames = ["ProductSupport"]
     passwords = ["Alog2024!"]
 
-    hashed_passwords = stauth.Hasher(["Alog2024!"]).generate()
+    hashed_passwords = stauth.Hasher(passwords).generate()
 
     authenticator = stauth.Authenticate(
         names, usernames, hashed_passwords, "some_cookie_name", "some_signature_key", cookie_expiry_days=30
