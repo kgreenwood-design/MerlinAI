@@ -151,7 +151,7 @@ def main():
 
     if st.session_state["authentication_status"]:
         # Taking user input
-        user_prompt = st.text_input("Message:")
+        user_prompt = st.text_area("Message:", height=150)
 
         if user_prompt:
             try:
@@ -173,7 +173,12 @@ def main():
                 st.session_state.conversation.append(
                     {'assistant': answer})
 
+                # Clear the text input box after submission
+                st.experimental_rerun()
+
             except Exception as e:
+                # Clear the text input box if an error occurs
+                st.experimental_rerun()
                 # Display an error message if an exception occurs
                 st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
                 print(f"ERROR: Exception when calling MultiRouteChain: {e}")
