@@ -1,14 +1,36 @@
 import streamlit as st
 import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
 import boto3
 import os
 import random
 import string
 
-BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['preauthorized']
+)
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 
-client = boto3.client('bedrock-agent-runtime')
+name, authentication_status, username = authenticator.login('Login', 'main')
+
+if authentication_status:
+    authenticator.logout('Logout', 'main')
+    st.write(f'Welcome *{name}*')
+    st.title('Conversational AI - Plant Technician')
+elif authentication_status == False:
+    st.error('Username/password is incorrect')
+    st.stop()
+elif authentication_status == None:
+    st.warning('Please enter your username and password')
+    st.stop()
 
 def format_retrieved_references(references):
     # Extracting the text and link from the references
@@ -71,18 +93,6 @@ def session_generator():
     return pattern
 
 def main():
-    # Authentication setup
-    names = ["Product Support"]
-    usernames = ["ProductSupport"]
-    passwords = ["Alog2024!"]
-
-    # Directly use the plain passwords for authentication
-    if st.text_input("Username") == usernames[0] and st.text_input("Password", type="password") == passwords[0]:
-        st.success(f"Welcome {names[0]}")
-    else:
-        st.error("Username/password is incorrect")
-        return
-    st.title("Conversational AI - Plant Technician")
 
     # Initialize the conversation state
     if 'conversation' not in st.session_state:
