@@ -37,7 +37,7 @@ st.markdown("""
     }
     .logo-container {
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
         margin-bottom: 2rem;
     }
 </style>
@@ -60,7 +60,7 @@ authenticator = stauth.Authenticate(
 
 # Display the logo above the login container
 st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-st.image(logo, width=200)  # Adjust the width as needed
+st.image(logo, width=300)  # Increased width to make the image bigger
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Create a container for the login form
