@@ -1,14 +1,36 @@
 import streamlit as st
 import streamlit_authenticator as stauth
-import yaml
-from yaml.loader import SafeLoader
 import boto3
 import os
 import random
 import string
 
-with open('config.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
+config = {
+    'credentials': {
+        'usernames': {
+            'ProductSupport': {
+                'email': 'user1@example.com',
+                'name': 'Product Support Team',
+                'password': 'Alog2024!'
+            },
+            'Admin': {
+                'email': 'user2@example.com',
+                'name': 'Admin',
+                'password': 'Alog2024!'
+            }
+        }
+    },
+    'cookie': {
+        'expiry_days': 30,
+        'key': 'some_random_key',
+        'name': 'some_cookie_name'
+    },
+    'preauthorized': {
+        'emails': [
+            'preauth_user@example.com'
+        ]
+    }
+}
 
 # Create the authenticator object
 authenticator = stauth.Authenticate(
