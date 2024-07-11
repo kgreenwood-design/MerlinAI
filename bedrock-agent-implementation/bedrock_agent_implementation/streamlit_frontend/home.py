@@ -33,14 +33,14 @@ if st.session_state["authentication_status"]:
 
     # Password reset widget
     try:
-        if authenticator.reset_password(st.session_state["username"], 'Reset password'):
+        if authenticator.reset_password(st.session_state["username"]):
             st.success('Password modified successfully')
     except Exception as e:
         st.error(e)
 
     # Update user details widget
     try:
-        if authenticator.update_user_details(st.session_state["username"], 'Update user details'):
+        if authenticator.update_user_details(st.session_state["username"]):
             st.success('Entries updated successfully')
     except Exception as e:
         st.error(e)
@@ -75,7 +75,7 @@ elif st.session_state["authentication_status"] is None:
 
     # New user registration widget
     try:
-        if authenticator.register_user('Register user', preauthorization=False):
+        email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(pre_authorization=False)
             st.success('User registered successfully')
     except Exception as e:
         st.error(e)
