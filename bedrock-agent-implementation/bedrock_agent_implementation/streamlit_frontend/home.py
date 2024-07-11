@@ -77,7 +77,8 @@ if not st.session_state["authentication_status"]:
     if 'show_register' not in st.session_state:
         st.session_state.show_register = False
 
-    col1, col2 = st.columns(2)
+    st.image(logo, width=300, use_column_width=True)
+    col1, col2 = st.columns([1, 1])
 
     if st.session_state.show_forgot_password:
         with col1:
@@ -110,7 +111,7 @@ if not st.session_state["authentication_status"]:
         if st.button('Register', key="register_button"):
             st.session_state.show_register = not st.session_state.show_register
             st.session_state.show_forgot_password = False
-        st.warning('Please enter your username and password')
+        st.markdown("<div style='text-align: right;'>Please enter your username and password</div>", unsafe_allow_html=True)
 
 
 def format_retrieved_references(references):
