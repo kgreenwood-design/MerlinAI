@@ -4,6 +4,46 @@ import boto3
 import os
 import random
 import string
+from PIL import Image
+import speech_recognition as sr
+import plotly.graph_objects as go
+import pandas as pd
+
+def plot_device_metrics(device_id):
+    # This is a placeholder. In reality, you'd fetch this data from your database
+    df = pd.DataFrame({
+        'timestamp': pd.date_range(start='2023-01-01', periods=100, freq='H'),
+        'temperature': np.random.randn(100) * 10 + 25,
+        'pressure': np.random.randn(100) * 5 + 100,
+        'oil_level': np.random.randn(100) * 2 + 50
+    })
+    
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=df['timestamp'], y=df['temperature'], name='Temperature'))
+    fig.add_trace(go.Scatter(x=df['timestamp'], y=df['pressure'], name='Pressure'))
+    fig.add_trace(go.Scatter(x=df['timestamp'], y=df['oil_level'], name='Oil Level'))
+    
+    fig.update_layout(title=f'Metrics for Device {device_id}', xaxis_title='Time', yaxis_title='Value')
+    st.plotly_chart(fig)
+
+def voice_input():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        st.write("Say something!")
+        audio = r.listen(source)
+    try:
+        text = r.recognize_google(audio)
+        st.write(f"You said: {text}")
+        return text
+    except sr.UnknownValueError:
+        st.write("Could not understand audio")
+    except sr.RequestError as e:
+        st.write(f"Could not request results; {e}")
+
+# Add this after the imports
+def display_image():
+    image = Image.open("path_to_your_image.jpg")
+    st.image(image, caption="IoT Device Visualization", use_column_width=True)
 
 def session_generator():
     # Generate random characters and digits
@@ -258,6 +298,33 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
+    # Add file uploader
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+    if uploaded_file is not None:
+        data = pd.read_csv(uploaded_file)
+        st.write(data)
+
+    # Add tabs for different functionalities
+    tab1, tab2, tab3 = st.tabs(["Chat", "Device Metrics", "Voice Input"])
+    
+    with tab1:
+        # Your existing chat functionality goes here
+        pass
+    
+    with tab2:
+        device_id = st.text_input("Enter Device ID")
+        if device_id:
+            plot_device_metrics(device_id)
+    
+    with tab3:
+        if st.button("Start Voice Input"):
+            user_input = voice_input()
+            if user_input:
+                process_user_input(user_input)
+
+    # Display image
+    display_image()
+
     # Initialize the conversation state and session ID
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
@@ -307,6 +374,14 @@ def process_user_input(user_prompt):
         answer = ""
         for stream in results:
             answer += process_stream(stream)
+        
+        # Check if the answer contains any actionable commands
+        if "display_metrics" in answer.lower():
+            device_id = extract_device_id(answer)  # You need to implement this function
+            plot_device_metrics(device_id)
+        elif "upload_file" in answer.lower():
+            st.info("Please use the file uploader in the sidebar to upload a CSV file.")
+        
         st.session_state.conversation.append({'assistant': answer})
         st.experimental_rerun()
     except Exception as e:
@@ -314,6 +389,13 @@ def process_user_input(user_prompt):
         print(f"ERROR: Exception when calling MultiRouteChain: {e}")
         st.session_state.conversation.append({'assistant': f"Error occurred: {e}"})
         st.experimental_rerun()
+
+def extract_device_id(text):
+    # Implement logic to extract device ID from the text
+    # This is a placeholder implementation
+    import re
+    match = re.search(r'device (\d+)', text, re.IGNORECASE)
+    return match.group(1) if match else None
 
 if __name__ == '__main__':
     main()
