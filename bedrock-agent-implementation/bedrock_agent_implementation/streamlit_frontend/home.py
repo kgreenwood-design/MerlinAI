@@ -2,12 +2,52 @@ import streamlit as st
 import streamlit_authenticator as stauth
 import boto3
 import os
+import random
+import string
+
+def session_generator():
+    # Generate random characters and digits
+    digits = ''.join(random.choice(string.digits) for _ in range(4))  # Generating 4 random digits
+    chars = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))  # Generating 3 random characters
+    
+    # Construct the pattern (1a23b-4c)
+    pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
+    print("Session ID: " + str(pattern))
+
+    return pattern
 import yaml
+from PIL import Image
 from yaml.loader import SafeLoader
 
-# Load configuration
+# Custom CSS for styling
+st.markdown("""
+<style>
+    .main {
+        padding-top: 2rem;
+    }
+    .stApp {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .login-container {
+        background-color: #f0f2f6;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .logo-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 2rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
+
+# Load the logo image
+logo = Image.open("image.png")
 
 # Create the authenticator object
 authenticator = stauth.Authenticate(
@@ -18,86 +58,262 @@ authenticator = stauth.Authenticate(
     config['preauthorized']
 )
 
+# Create a container for the login form and logo
+login_container = st.container()
+
+with login_container:
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    st.image(logo, width=300)  # Increased width to make the image bigger
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with login_container:
+    st.markdown('<div class="login-container">', unsafe_allow_html=True)
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
-# Custom CSS for styling
-st.markdown("""
-<style>
+# Render the login widget
+authenticator.login()
+
+if st.session_state["authentication_status"]:
+    st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
+    st.write(f'Welcome *{st.session_state["name"]}*')
+    st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: sans-serif;'>MerlinAI</h1>", unsafe_allow_html=True)
+
+    with st.sidebar:
+        authenticator.logout('Logout', 'main')
+
+        with st.expander("Account Settings"):
+            # Password reset widget
+            try:
+                if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
+                    st.success('Password modified successfully')
+            except Exception as e:
+                st.error(e)
+
+            # Update user details widget
+            try:
+                if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
+                    st.success('Entries updated successfully')
+            except Exception as e:
+                st.error(e)
+
+        with st.expander("Session Options"):
+            st.write("Session ID: ", st.session_state.session_id)
+            if st.button("Generate New Session ID", key="generate_session_id_sidebar"):
+                st.session_state.session_id = session_generator()
+                st.experimental_rerun()
+
+        with st.expander("Conversation Options"):
+            if st.button("Clear Conversation", key="clear_conversation_sidebar"):
+                st.session_state.conversation = []
+                st.experimental_rerun()
+
+elif st.session_state["authentication_status"] is False:
+    st.error('Username/password is incorrect')
+
+if not st.session_state["authentication_status"]:
+    if 'show_forgot_password' not in st.session_state:
+        st.session_state.show_forgot_password = False
+    if 'show_register' not in st.session_state:
+        st.session_state.show_register = False
+
+    col1, col2 = st.columns([1, 1])
+
+    if st.session_state.show_forgot_password:
+        with col1:
+            # Forgotten password widget
+            try:
+                username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
+                if username_forgot_pw:
+                    st.success('New password sent securely')
+                    st.session_state.show_forgot_password = False
+                    # Random password to be transferred to user securely
+                elif username_forgot_pw == False:
+                    st.error('Username not found')
+            except Exception as e:
+                st.error(e)
+
+    if st.session_state.show_register:
+        with col2:
+            # New user registration widget
+            try:
+                email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
+                st.success('User registered successfully')
+                st.session_state.show_register = False
+            except Exception as e:
+                st.error(e)
+
+    with col1:
+        if st.button('Forgot Password?', key="forgot_password_button"):
+            st.session_state.show_forgot_password = not st.session_state.show_forgot_password
+            st.session_state.show_register = False
+    with col2:
+        if st.button('Register', key="register_button"):
+            st.session_state.show_register = not st.session_state.show_register
+            st.session_state.show_forgot_password = False
+
+st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
+
+
+def format_retrieved_references(references):
+    # Extracting the text and link from the references
+    for reference in references:
+        content_text = reference.get("content", {}).get("text", "")
+        s3_uri = reference.get("location", {}).get("s3Location", {}).get("uri", "")
+
+        # Formatting the output
+        formatted_output = "Reference Information:\n"
+        formatted_output += f"Content: {content_text}\n"
+        formatted_output += f"S3 URI: {s3_uri}\n"
+
+        return formatted_output
+
+
+def process_stream(stream):
+    try:
+        # print("Processing stream...")
+        trace = stream.get("trace", {}).get("trace", {}).get("orchestrationTrace", {})
+
+        if trace:
+            # print("This is a trace")
+            knowledgeBaseInput = trace.get("invocationInput", {}).get(
+                "knowledgeBaseLookupInput", {}
+            )
+            if knowledgeBaseInput:
+                print(
+                    f'Looking up in knowledgebase: {knowledgeBaseInput.get("text", "")}'
+                )
+            knowledgeBaseOutput = trace.get("observation", {}).get(
+                "knowledgeBaseLookupOutput", {}
+            )
+            if knowledgeBaseOutput:
+                retrieved_references = knowledgeBaseOutput.get(
+                    "retrievedReferences", {}
+                )
+                if retrieved_references:
+                    print("Formatted References:")
+                    return format_retrieved_references(retrieved_references)
+
+        # Handle 'chunk' data
+        if "chunk" in stream:
+            print("This is the final answer:")
+            text = stream["chunk"]["bytes"].decode("utf-8")
+            return text
+
+    except Exception as e:
+        print(f"Error processing stream: {e}")
+        print(stream)
+
+def session_generator():
+    # Generate random characters and digits
+    digits = ''.join(random.choice(string.digits) for _ in range(4))  # Generating 4 random digits
+    chars = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))  # Generating 3 random characters
+    
+    # Construct the pattern (1a23b-4c)
+    pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
+    print("Session ID: " + str(pattern))
+
+    return pattern
+
+def main():
+    # Add custom CSS for layout
+    st.markdown("""
+    <style>
     .stApp {
         max-width: 800px;
         margin: 0 auto;
     }
-    .chat-container {
-        height: 400px;
-        overflow-y: auto;
-        border: 1px solid #ddd;
-        padding: 10px;
-        margin-bottom: 20px;
+    .chat-message {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+    }
+    .chat-message.user {
+        background-color: #f0f0f0;
+    }
+    .chat-message.assistant {
+        background-color: #e6f3ff;
+    }
+    .chat-message .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+    }
+    .chat-message .message {
+        flex-grow: 1;
     }
     .input-container {
-        display: flex;
-        gap: 10px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem;
+        background-color: white;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
     }
-    .stTextInput > div > div > input {
-        height: 50px;
-    }
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """, unsafe_allow_html=True)
 
-# Authentication
-authenticator.login()
-
-if st.session_state["authentication_status"]:
-    st.title("MerlinAI")
-
-    # Initialize session state
+    # Initialize the conversation state and session ID
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
     if 'session_id' not in st.session_state:
-        st.session_state.session_id =  ''.join(os.urandom(10).hex())
+        st.session_state.session_id = session_generator()
 
-    # Chat display
-    chat_container = st.container()
-    with chat_container:
-        st.markdown('<div class="chat-container">', unsafe_allow_html=True)
-        for message in st.session_state.conversation:
-            st.write(f"{'You' if 'user' in message else 'Assistant'}: {list(message.values())[0]}")
-        st.markdown('</div>', unsafe_allow_html=True)
+    if st.session_state["authentication_status"]:
+        st.title("MerlinAI")
 
-    # Input area
-    with st.container():
-        col1, col2, col3 = st.columns([3, 1, 1])
-        with col1:
-            user_input = st.text_input("Enter your message:", key="user_input")
-        with col2:
-            if st.button("Send"):
-                if user_input:
-                    st.session_state.conversation.append({'user': user_input})
-                    try:
-                        response = client.invoke_agent(
-                            agentId=BEDROCK_AGENT_ID,
-                            agentAliasId=BEDROCK_AGENT_ALIAS,
-                            sessionId=st.session_state.session_id,
-                            endSession=False,
-                            inputText=user_input
-                        )
-                        answer = response.get("completion", [])
-                        st.session_state.conversation.append({'assistant': answer})
-                    except Exception as e:
-                        st.error(f"Error: {str(e)}")
+        # Display conversation
+        for interaction in st.session_state.conversation:
+            if 'user' in interaction:
+                st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["user"]}</div></div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["assistant"]}</div></div>', unsafe_allow_html=True)
+
+        # Input container
+        with st.container():
+            st.markdown('<div class="input-container">', unsafe_allow_html=True)
+            user_prompt = st.text_input("Message:", key="user_input")
+            col1, col2, col3 = st.columns([1,1,1])
+            with col1:
+                if st.button("Submit"):
+                    if user_prompt:
+                        process_user_input(user_prompt)
+            with col2:
+                if st.button("Clear Conversation"):
+                    st.session_state.conversation = []
                     st.experimental_rerun()
-        with col3:
-            if st.button("Clear Chat"):
-                st.session_state.conversation = []
-                st.experimental_rerun()
+            with col3:
+                if st.button("New Session"):
+                    st.session_state.session_id = session_generator()
+                    st.experimental_rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-    # Logout button in sidebar
-    with st.sidebar:
-        authenticator.logout('Logout', 'main')
+def process_user_input(user_prompt):
+    try:
+        st.session_state.conversation.append({'user': user_prompt})
+        response = client.invoke_agent(
+            agentId=BEDROCK_AGENT_ID,
+            agentAliasId=BEDROCK_AGENT_ALIAS,
+            sessionId=st.session_state.session_id,
+            endSession=False,
+            inputText=user_prompt
+        )
+        results = response.get("completion", [])
+        answer = ""
+        for stream in results:
+            answer += process_stream(stream)
+        st.session_state.conversation.append({'assistant': answer})
+        st.experimental_rerun()
+    except Exception as e:
+        st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
+        print(f"ERROR: Exception when calling MultiRouteChain: {e}")
+        st.session_state.conversation.append({'assistant': f"Error occurred: {e}"})
+        st.experimental_rerun()
 
-elif st.session_state["authentication_status"] is False:
-    st.error('Username/password is incorrect')
-elif st.session_state["authentication_status"] is None:
-    st.warning('Please enter your username and password')
+if __name__ == '__main__':
+    main()
