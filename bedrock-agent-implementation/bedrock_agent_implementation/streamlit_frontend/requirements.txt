@@ -6,3 +6,4 @@ pillow
 SpeechRecognition
 plotly
 pandas
+numpy

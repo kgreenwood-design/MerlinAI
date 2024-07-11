@@ -8,6 +8,7 @@ from PIL import Image
 import speech_recognition as sr
 import plotly.graph_objects as go
 import pandas as pd
+import numpy as np
 
 def plot_device_metrics(device_id):
     # This is a placeholder. In reality, you'd fetch this data from your database
