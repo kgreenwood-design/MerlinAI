@@ -15,8 +15,6 @@ with open('config.yaml') as file:
 # Load the logo image
 logo = Image.open("image.png")
 
-# Display the logo image on the main page
-st.image(logo, use_column_width=True)
 
 # Create the authenticator object
 authenticator = stauth.Authenticate(
@@ -31,11 +29,12 @@ BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
 # Render the login widget
+# Display the logo image within the login container
+st.image(logo, width=150)
 authenticator.login()
 
 if st.session_state["authentication_status"]:
     with st.sidebar:
-        st.image(logo, use_column_width=True)
         authenticator.logout('Logout', 'main')
     st.write(f'Welcome *{st.session_state["name"]}*')
     st.title('Conversational AI - Plant Technician')
@@ -56,7 +55,6 @@ if st.session_state["authentication_status"]:
             st.error(e)
 
 elif st.session_state["authentication_status"] is False:
-    st.image(logo, use_column_width=True)
     st.error('Username/password is incorrect')
 
     if 'show_forgot_password' not in st.session_state:
@@ -99,7 +97,6 @@ elif st.session_state["authentication_status"] is False:
             st.session_state.show_forgot_password = False
 
 elif st.session_state["authentication_status"] is None:
-    st.image(logo, use_column_width=True)
     st.warning('Please enter your username and password')
 
 def format_retrieved_references(references):
