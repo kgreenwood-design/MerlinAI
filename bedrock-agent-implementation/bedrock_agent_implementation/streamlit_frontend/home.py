@@ -29,10 +29,14 @@ BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
 # Render the login widget
+# Display the logo image within the login container
+st.image(logo, width=150)
 authenticator.login()
 
 if st.session_state["authentication_status"]:
     with st.sidebar:
+        # Display the logo image at the top of the sidebar
+        st.image(logo, width=150)
         authenticator.logout('Logout', 'main')
     st.write(f'Welcome *{st.session_state["name"]}*')
     st.title('Conversational AI - Plant Technician')
@@ -166,7 +170,7 @@ def main():
 
     if st.session_state["authentication_status"]:
         # Display the logo image within the message box
-        st.image(logo, width=100)
+        st.image(logo, width=200)
 
         # Taking user input        
         user_prompt = st.text_area("Message:", height=150)
