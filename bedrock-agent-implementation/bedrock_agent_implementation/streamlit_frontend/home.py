@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit_authenticator as stauth
 import boto3
 import os
 import random
@@ -70,6 +71,26 @@ def session_generator():
     return pattern
 
 def main():
+    # Authentication setup
+    names = ["John Doe", "Jane Smith"]
+    usernames = ["johndoe", "janesmith"]
+    passwords = ["password123", "password456"]
+
+    hashed_passwords = stauth.Hasher(passwords).generate()
+
+    authenticator = stauth.Authenticate(
+        names, usernames, hashed_passwords, "some_cookie_name", "some_signature_key", cookie_expiry_days=30
+    )
+
+    name, authentication_status, username = authenticator.login("Login", "main")
+
+    if authentication_status:
+        st.success(f"Welcome {name}")
+    elif authentication_status == False:
+        st.error("Username/password is incorrect")
+    elif authentication_status == None:
+        st.warning("Please enter your username and password")
+        return
     st.title("Conversational AI - Plant Technician")
 
     # Initialize the conversation state
