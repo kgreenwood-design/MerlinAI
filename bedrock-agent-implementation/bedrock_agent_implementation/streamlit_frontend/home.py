@@ -61,11 +61,11 @@ BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
-    # Render the login widget
-    authenticator.login()
+# Render the login widget
+authenticator.login()
 
-    if st.session_state["authentication_status"]:
-        st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
+if st.session_state["authentication_status"]:
+    st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
         st.write(f'Welcome *{st.session_state["name"]}*')
         st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: sans-serif;'>MerlinAI</h1>", unsafe_allow_html=True)
 
