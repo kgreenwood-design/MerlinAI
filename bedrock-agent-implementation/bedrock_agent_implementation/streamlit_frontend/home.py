@@ -7,18 +7,19 @@ import os
 import random
 import string
 
+# Define the configuration
 config = {
     'credentials': {
         'usernames': {
             'ProductSupport': {
                 'email': 'user1@example.com',
                 'name': 'Product Support Team',
-                'password': 'Alog2024!'
+                'password': stauth.Hasher(['Alog2024!']).generate()[0]
             },
             'Admin': {
                 'email': 'user2@example.com',
                 'name': 'Admin',
-                'password': 'Alog2024!'
+                'password': stauth.Hasher(['Alog2024!']).generate()[0]
             }
         }
     },
@@ -34,29 +35,30 @@ config = {
     }
 }
 
+# Create the authenticator object
 authenticator = stauth.Authenticate(
-    credentials=config['credentials'],
-    cookie_name=config['cookie']['name'],
-    key=config['cookie']['key'],
-    cookie_expiry_days=config['cookie']['expiry_days'],
-    preauthorized=config['preauthorized']
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['preauthorized']
 )
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
+# Render the login widget
 name, authentication_status, username = authenticator.login('Login', 'main')
 
+# Authenticate users
 if authentication_status:
-    authenticator.logout('Logout', 'main', key='logout')
-    st.success(f'Welcome *{name}*')
+    authenticator.logout('Logout', 'main')
+    st.write(f'Welcome *{name}*')
     st.title('Conversational AI - Plant Technician')
 elif authentication_status == False:
     st.error('Username/password is incorrect')
-    st.stop()
 elif authentication_status == None:
     st.warning('Please enter your username and password')
-    st.stop()
 
 def format_retrieved_references(references):
     # Extracting the text and link from the references
