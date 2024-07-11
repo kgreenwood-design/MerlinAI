@@ -220,96 +220,100 @@ def main():
     # Add custom CSS for layout
     st.markdown("""
     <style>
-    .main-container {
+    .stApp {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .chat-message {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
         display: flex;
-        flex-direction: column;
-        height: 100vh;
     }
-    .header {
-        flex: 0 0 auto;
+    .chat-message.user {
+        background-color: #f0f0f0;
     }
-    .conversation {
-        flex: 1 1 auto;
-        overflow-y: auto;
-        padding: 10px;
+    .chat-message.assistant {
+        background-color: #e6f3ff;
     }
-    .message-input {
-        flex: 0 0 auto;
-        padding: 10px;
-        background-color: white;
-        position: sticky;
+    .chat-message .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 1rem;
+    }
+    .chat-message .message {
+        flex-grow: 1;
+    }
+    .input-container {
+        position: fixed;
         bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1rem;
+        background-color: white;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Initialize the conversation state
+    # Initialize the conversation state and session ID
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
-    # Initialize the agent session id
     if 'session_id' not in st.session_state:
         st.session_state.session_id = session_generator()
 
     if st.session_state["authentication_status"]:
-        # Main container
+        st.title("MerlinAI")
+
+        # Display conversation
+        for interaction in st.session_state.conversation:
+            if 'user' in interaction:
+                st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["user"]}</div></div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["assistant"]}</div></div>', unsafe_allow_html=True)
+
+        # Input container
         with st.container():
-            st.markdown('<div class="main-container">', unsafe_allow_html=True)
-            
-            # Header
-            with st.container():
-                st.markdown('<div class="header">', unsafe_allow_html=True)
-                st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: sans-serif;'>MerlinAI</h1>", unsafe_allow_html=True)
-                col1, col2, col3 = st.columns([1,1,1])
-                with col1:
-                    if st.button("Clear Conversation", key="clear_conversation_main"):
-                        st.session_state.conversation = []
-                        st.experimental_rerun()
-                with col2:
-                    if st.button("Generate New Session ID", key="generate_session_id_main"):
-                        st.session_state.session_id = session_generator()
-                        st.experimental_rerun()
-                with col3:
-                    st.image(logo, width=100)
-                st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Conversation
-            with st.container():
-                st.markdown('<div class="conversation">', unsafe_allow_html=True)
-                for interaction in st.session_state.conversation:
-                    if 'user' in interaction:
-                        st.markdown(f'<span style="color: #4A90E2; font-weight: bold;">User:</span> {interaction["user"]}', unsafe_allow_html=True)
-                    else:
-                        st.markdown(f'<span style="color: #50E3C2; font-weight: bold;">Assistant:</span> {interaction["assistant"]}', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
-            
-            # Message input
-            with st.container():
-                st.markdown('<div class="message-input">', unsafe_allow_html=True)
-                user_prompt = st.text_area("Message:", height=100)
-                if st.button("Submit") and user_prompt:
-                    try:
-                        st.session_state.conversation.append({'user': user_prompt})
-                        response = client.invoke_agent(
-                            agentId=BEDROCK_AGENT_ID,
-                            agentAliasId=BEDROCK_AGENT_ALIAS,
-                            sessionId=st.session_state.session_id,
-                            endSession=False,
-                            inputText=user_prompt
-                        )
-                        results = response.get("completion", [])
-                        answer = ""
-                        for stream in results:
-                            answer += process_stream(stream)
-                        st.session_state.conversation.append({'assistant': answer})
-                        st.experimental_rerun()
-                    except Exception as e:
-                        st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
-                        print(f"ERROR: Exception when calling MultiRouteChain: {e}")
-                        st.session_state.conversation.append({'assistant': f"Error occurred: {e}"})
-                        st.experimental_rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-            
+            st.markdown('<div class="input-container">', unsafe_allow_html=True)
+            user_prompt = st.text_input("Message:", key="user_input")
+            col1, col2, col3 = st.columns([1,1,1])
+            with col1:
+                if st.button("Submit"):
+                    if user_prompt:
+                        process_user_input(user_prompt)
+            with col2:
+                if st.button("Clear Conversation"):
+                    st.session_state.conversation = []
+                    st.experimental_rerun()
+            with col3:
+                if st.button("New Session"):
+                    st.session_state.session_id = session_generator()
+                    st.experimental_rerun()
             st.markdown('</div>', unsafe_allow_html=True)
+
+def process_user_input(user_prompt):
+    try:
+        st.session_state.conversation.append({'user': user_prompt})
+        response = client.invoke_agent(
+            agentId=BEDROCK_AGENT_ID,
+            agentAliasId=BEDROCK_AGENT_ALIAS,
+            sessionId=st.session_state.session_id,
+            endSession=False,
+            inputText=user_prompt
+        )
+        results = response.get("completion", [])
+        answer = ""
+        for stream in results:
+            answer += process_stream(stream)
+        st.session_state.conversation.append({'assistant': answer})
+        st.experimental_rerun()
+    except Exception as e:
+        st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
+        print(f"ERROR: Exception when calling MultiRouteChain: {e}")
+        st.session_state.conversation.append({'assistant': f"Error occurred: {e}"})
+        st.experimental_rerun()
 
 if __name__ == '__main__':
     main()
