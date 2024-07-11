@@ -9,6 +9,8 @@ import speech_recognition as sr
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
+import yaml
+from yaml.loader import SafeLoader
 
 def plot_device_metrics(device_id):
     # This is a placeholder. In reality, you'd fetch this data from your database
@@ -41,10 +43,14 @@ def voice_input():
     except sr.RequestError as e:
         st.write(f"Could not request results; {e}")
 
-# Add this after the imports
-def display_image():
-    image = Image.open("path_to_your_image.jpg")
-    st.image(image, caption="IoT Device Visualization", use_column_width=True)
+def display_image(image_path):
+    try:
+        image = Image.open(image_path)
+        st.image(image, caption="IoT Device Visualization", use_column_width=True)
+    except FileNotFoundError:
+        st.error(f"Image file not found: {image_path}")
+    except Exception as e:
+        st.error(f"Error displaying image: {str(e)}")
 
 def session_generator():
     # Generate random characters and digits
@@ -56,6 +62,14 @@ def session_generator():
     print("Session ID: " + str(pattern))
 
     return pattern
+
+def load_csv(uploaded_file):
+    try:
+        df = pd.read_csv(uploaded_file)
+        return df
+    except Exception as e:
+        st.error(f"Error loading CSV file: {str(e)}")
+        return None
 import yaml
 from PIL import Image
 from yaml.loader import SafeLoader
@@ -299,33 +313,6 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    # Add file uploader
-    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
-        st.write(data)
-
-    # Add tabs for different functionalities
-    tab1, tab2, tab3 = st.tabs(["Chat", "Device Metrics", "Voice Input"])
-    
-    with tab1:
-        # Your existing chat functionality goes here
-        pass
-    
-    with tab2:
-        device_id = st.text_input("Enter Device ID")
-        if device_id:
-            plot_device_metrics(device_id)
-    
-    with tab3:
-        if st.button("Start Voice Input"):
-            user_input = voice_input()
-            if user_input:
-                process_user_input(user_input)
-
-    # Display image
-    display_image()
-
     # Initialize the conversation state and session ID
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
@@ -335,31 +322,61 @@ def main():
     if st.session_state["authentication_status"]:
         st.title("MerlinAI")
 
-        # Display conversation
-        for interaction in st.session_state.conversation:
-            if 'user' in interaction:
-                st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["user"]}</div></div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["assistant"]}</div></div>', unsafe_allow_html=True)
+        # Add tabs for different functionalities
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Chat", "Device Metrics", "Voice Input", "File Upload", "Image Display"])
+        
+        with tab1:
+            # Display conversation
+            for interaction in st.session_state.conversation:
+                if 'user' in interaction:
+                    st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["user"]}</div></div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["assistant"]}</div></div>', unsafe_allow_html=True)
 
-        # Input container
-        with st.container():
-            st.markdown('<div class="input-container">', unsafe_allow_html=True)
-            user_prompt = st.text_input("Message:", key="user_input")
-            col1, col2, col3 = st.columns([1,1,1])
-            with col1:
-                if st.button("Submit"):
-                    if user_prompt:
-                        process_user_input(user_prompt)
-            with col2:
-                if st.button("Clear Conversation"):
-                    st.session_state.conversation = []
-                    st.experimental_rerun()
-            with col3:
-                if st.button("New Session"):
-                    st.session_state.session_id = session_generator()
-                    st.experimental_rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            # Input container
+            with st.container():
+                st.markdown('<div class="input-container">', unsafe_allow_html=True)
+                user_prompt = st.text_input("Message:", key="user_input")
+                col1, col2, col3 = st.columns([1,1,1])
+                with col1:
+                    if st.button("Submit"):
+                        if user_prompt:
+                            process_user_input(user_prompt)
+                with col2:
+                    if st.button("Clear Conversation"):
+                        st.session_state.conversation = []
+                        st.experimental_rerun()
+                with col3:
+                    if st.button("New Session"):
+                        st.session_state.session_id = session_generator()
+                        st.experimental_rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+        
+        with tab2:
+            device_id = st.text_input("Enter Device ID")
+            if device_id:
+                plot_device_metrics(device_id)
+        
+        with tab3:
+            if st.button("Start Voice Input"):
+                user_input = voice_input()
+                if user_input:
+                    process_user_input(user_input)
+        
+        with tab4:
+            uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+            if uploaded_file is not None:
+                data = load_csv(uploaded_file)
+                if data is not None: 
+                    st.write(data)
+        
+        with tab5:
+            image_path = st.text_input("Enter the path to your image:")
+            if image_path:
+                display_image(image_path)
+
+    else:
+        st.warning("Please log in to access the application.")
 
 def process_user_input(user_prompt):
     try:
