@@ -7,12 +7,32 @@ import os
 import random
 import string
 
-if os.path.exists('config.yaml'):
-    with open('config.yaml') as file:
-        config = yaml.load(file, Loader=SafeLoader)
-else:
-    st.error("Configuration file 'config.yaml' not found.")
-    st.stop()
+config = {
+    'credentials': {
+        'usernames': {
+            'ProductSupport': {
+                'email': 'user1@example.com',
+                'name': 'Product Support Team',
+                'password': 'Alog2024!'
+            },
+            'Admin': {
+                'email': 'user2@example.com',
+                'name': 'Admin',
+                'password': 'Alog2024!'
+            }
+        }
+    },
+    'cookie': {
+        'expiry_days': 30,
+        'key': 'some_random_key',
+        'name': 'some_cookie_name'
+    },
+    'preauthorized': {
+        'emails': [
+            'preauth_user@example.com'
+        ]
+    }
+}
 
 authenticator = stauth.Authenticate(
     credentials=config['credentials'],
