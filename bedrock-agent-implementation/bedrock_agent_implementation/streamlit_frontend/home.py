@@ -38,23 +38,35 @@ if st.session_state["authentication_status"]:
         # Display the logo image at the top of the sidebar
         st.image(logo, width=150)
         authenticator.logout('Logout', 'main')
+
+        with st.expander("Account Settings"):
+            # Password reset widget
+            try:
+                if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
+                    st.success('Password modified successfully')
+            except Exception as e:
+                st.error(e)
+
+            # Update user details widget
+            try:
+                if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
+                    st.success('Entries updated successfully')
+            except Exception as e:
+                st.error(e)
+
+        with st.expander("Session Options"):
+            st.write("Session ID: ", st.session_state.session_id)
+            if st.button("Generate New Session ID"):
+                st.session_state.session_id = session_generator()
+                st.experimental_rerun()
+
+        with st.expander("Conversation Options"):
+            if st.button("Clear Conversation"):
+                st.session_state.conversation = []
+                st.experimental_rerun()
+
     st.write(f'Welcome *{st.session_state["name"]}*')
     st.title('Conversational AI - Plant Technician')
-
-    with st.sidebar:
-        # Password reset widget
-        try:
-            if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
-                st.success('Password modified successfully')
-        except Exception as e:
-            st.error(e)
-
-        # Update user details widget
-        try:
-            if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
-                st.success('Entries updated successfully')
-        except Exception as e:
-            st.error(e)
 
 elif st.session_state["authentication_status"] is False:
     st.error('Username/password is incorrect')
@@ -175,7 +187,7 @@ def main():
         # Taking user input        
         user_prompt = st.text_area("Message:", height=150)
 
-        if user_prompt and st.button("Submit"):
+        if st.button("Submit") and user_prompt:
             try:
                 # Add the user's prompt to the conversation state
                 st.session_state.conversation.append({'user': user_prompt})
