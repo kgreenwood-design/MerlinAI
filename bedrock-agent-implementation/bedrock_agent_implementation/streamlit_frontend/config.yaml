@@ -1,13 +1,13 @@
 credentials:
   usernames:
-    user1:
+    ProductSupport:
       email: user1@example.com
-      name: User One
-      password: hashed_password1
-    user2:
+      name: Product Support Team 
+      password: Alog2024!
+    Admin:
       email: user2@example.com
-      name: User Two
-      password: hashed_password2
+      name: Admin
+      password: Alog2024!
 
 cookie:
   expiry_days: 30
@@ -16,4 +16,4 @@ cookie:
 
 preauthorized:
   emails:
-    - preauth_user@example.com
+    - kgreenwood4@yahoo.com

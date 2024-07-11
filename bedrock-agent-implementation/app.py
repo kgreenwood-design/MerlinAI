@@ -7,7 +7,7 @@ from bedrock_agent_implementation.stacks import bedrock_agent_stack
 from bedrock_agent_implementation.stacks import frontend_stack
 
 
-APP_PREFIX = "BedrockAgentImpl"
+APP_PREFIX = "MerlinAI"
 
 app = cdk.App()
 base_stack = base_infra_stack.BaseInfraStack(app, f"{APP_PREFIX}BaseInfraStack", "IoTAgent")
