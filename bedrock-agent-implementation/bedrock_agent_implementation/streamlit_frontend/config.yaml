@@ -1,0 +1,19 @@
+credentials:
+  usernames:
+    user1:
+      email: user1@example.com
+      name: User One
+      password: hashed_password1
+    user2:
+      email: user2@example.com
+      name: User Two
+      password: hashed_password2
+
+cookie:
+  expiry_days: 30
+  key: some_random_key
+  name: some_cookie_name
+
+preauthorized:
+  emails:
+    - preauth_user@example.com
