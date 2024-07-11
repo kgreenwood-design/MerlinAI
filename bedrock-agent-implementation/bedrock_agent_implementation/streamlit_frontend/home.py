@@ -4,6 +4,17 @@ import boto3
 import os
 import random
 import string
+
+def session_generator():
+    # Generate random characters and digits
+    digits = ''.join(random.choice(string.digits) for _ in range(4))  # Generating 4 random digits
+    chars = ''.join(random.choice(string.ascii_lowercase) for _ in range(3))  # Generating 3 random characters
+    
+    # Construct the pattern (1a23b-4c)
+    pattern = f"{digits[0]}{chars[0]}{digits[1:3]}{chars[1]}-{digits[3]}{chars[2]}"
+    print("Session ID: " + str(pattern))
+
+    return pattern
 import yaml
 from PIL import Image
 from yaml.loader import SafeLoader
