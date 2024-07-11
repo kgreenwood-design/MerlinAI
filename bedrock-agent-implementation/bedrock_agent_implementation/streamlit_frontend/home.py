@@ -72,11 +72,11 @@ def session_generator():
 
 def main():
     # Authentication setup
-    names = ["John Doe", "Jane Smith"]
-    usernames = ["johndoe", "janesmith"]
-    passwords = ["password123", "password456"]
+    names = ["Product Support"]
+    usernames = ["ProductSupport"]
+    passwords = ["Alog2024!"]
 
-    hashed_passwords = stauth.Hasher(passwords).generate()
+    hashed_passwords = stauth.Hasher(["Alog2024!"]).generate()
 
     authenticator = stauth.Authenticate(
         names, usernames, hashed_passwords, "some_cookie_name", "some_signature_key", cookie_expiry_days=30
