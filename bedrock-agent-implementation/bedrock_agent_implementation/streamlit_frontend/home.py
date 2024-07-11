@@ -7,33 +7,8 @@ import os
 import random
 import string
 
-# Define the configuration
-config = {
-    'credentials': {
-        'usernames': {
-            'ProductSupport': {
-                'email': 'user1@example.com',
-                'name': 'Product Support Team',
-                'password': 'Alog2024!'
-            },
-            'Admin': {
-                'email': 'user2@example.com',
-                'name': 'Admin',
-                'password': 'Alog2024!'
-            }
-        }
-    },
-    'cookie': {
-        'expiry_days': 30,
-        'key': 'some_random_key',
-        'name': 'some_cookie_name'
-    },
-    'preauthorized': {
-        'emails': [
-            'preauth_user@example.com'
-        ]
-    }
-}
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
 
 # Create the authenticator object
 authenticator = stauth.Authenticate(
@@ -48,16 +23,15 @@ BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
 # Render the login widget
-name, authentication_status, username = authenticator.login('Login', 'main')
+authenticator.login()
 
-# Authenticate users
-if authentication_status:
+if st.session_state["authentication_status"]:
     authenticator.logout('Logout', 'main')
-    st.write(f'Welcome *{name}*')
+    st.write(f'Welcome *{st.session_state["name"]}*')
     st.title('Conversational AI - Plant Technician')
-elif authentication_status == False:
+elif st.session_state["authentication_status"] is False:
     st.error('Username/password is incorrect')
-elif authentication_status == None:
+elif st.session_state["authentication_status"] is None:
     st.warning('Please enter your username and password')
 
 def format_retrieved_references(references):
