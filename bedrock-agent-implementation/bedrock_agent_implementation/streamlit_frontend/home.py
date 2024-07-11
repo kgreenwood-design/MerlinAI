@@ -5,32 +5,11 @@ import os
 import random
 import string
 
-config = {
-    'credentials': {
-        'usernames': {
-            'ProductSupport': {
-                'email': 'user1@example.com',
-                'name': 'Product Support Team',
-                'password': 'Alog2024!'
-            },
-            'Admin': {
-                'email': 'user2@example.com',
-                'name': 'Admin',
-                'password': 'Alog2024!'
-            }
-        }
-    },
-    'cookie': {
-        'expiry_days': 30,
-        'key': 'some_random_key',
-        'name': 'some_cookie_name'
-    },
-    'preauthorized': {
-        'emails': [
-            'preauth_user@example.com'
-        ]
-    }
-}
+import yaml
+from yaml.loader import SafeLoader
+
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
 
 # Create the authenticator object
 authenticator = stauth.Authenticate(
