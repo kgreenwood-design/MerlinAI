@@ -2,7 +2,7 @@
 FROM amazonlinux:2023
 
 # Install pre-reqs
-RUN yum update -y && yum install shadow-utils cmake g++ gcc python3 python3-pip -y
+RUN yum update -y && yum install shadow-utils cmake g++ gcc python3 python3-pip python3-setuptools -y
 RUN pip3 --version
 
 # Create the user
@@ -28,7 +28,7 @@ RUN pip3 install -r requirements.txt
 
 RUN chown $USERNAME:$USERNAME /app
 
-USER $USER
+USER $USERNAME
 
 EXPOSE 8501
 
