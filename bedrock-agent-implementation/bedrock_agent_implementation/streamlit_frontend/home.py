@@ -217,6 +217,31 @@ def session_generator():
     return pattern
 
 def main():
+    # Add custom CSS for layout
+    st.markdown("""
+    <style>
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    .header {
+        flex: 0 0 auto;
+    }
+    .conversation {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 10px;
+    }
+    .message-input {
+        flex: 0 0 auto;
+        padding: 10px;
+        background-color: white;
+        position: sticky;
+        bottom: 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
     # Initialize the conversation state
     if 'conversation' not in st.session_state:
@@ -226,66 +251,65 @@ def main():
         st.session_state.session_id = session_generator()
 
     if st.session_state["authentication_status"]:
-        col1, col2 = st.columns([3, 1])
-
-        with col1:
-            # Taking user input        
-            user_prompt = st.text_area("Message:", height=150)
-
-        with col2:
-            # Display the logo image within the message box
-            st.image(logo, width=300)
-
-        # Common buttons
-        if st.button("Clear Conversation", key="clear_conversation_main"):
-            st.session_state.conversation = []
-            st.experimental_rerun()
-        if st.button("Generate New Session ID", key="generate_session_id_main"):
-            st.session_state.session_id = session_generator()
-            st.experimental_rerun()
-
-        if st.button("Submit") and user_prompt:
-            try:
-                # Add the user's prompt to the conversation state
-                st.session_state.conversation.append({'user': user_prompt})
-
-                # Format and add the answer to the conversation state
-                response = client.invoke_agent(
-                    agentId=BEDROCK_AGENT_ID,
-                    agentAliasId=BEDROCK_AGENT_ALIAS,
-                    sessionId=st.session_state.session_id,
-                    endSession=False,
-                    inputText=user_prompt
-                )
-                results = response.get("completion", [])
-                answer = ""
-                for stream in results:
-                    answer += process_stream(stream)
-                st.session_state.conversation.append(
-                    {'assistant': answer})
-
-                # Clear the text input box after submission
-                st.experimental_rerun()
-
-            except Exception as e:
-                # Clear the text input box if an error occurs
-                st.experimental_rerun()
-                # Display an error message if an exception occurs
-                st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
-                print(f"ERROR: Exception when calling MultiRouteChain: {e}")
-                formatted_answer = f"Error occurred: {e}"
-                st.session_state.conversation.append(
-                    {'assistant': formatted_answer})
-
-        # Display the conversation
-        for interaction in st.session_state.conversation:
+        # Main container
+        with st.container():
+            st.markdown('<div class="main-container">', unsafe_allow_html=True)
+            
+            # Header
             with st.container():
-                if 'user' in interaction:
-                    # Apply a custom color to the "User" alias using inline CSS
-                    st.markdown(f'<span style="color: #4A90E2; font-weight: bold;">User:</span> {interaction["user"]}', unsafe_allow_html=True)
-                else:
-                    # Apply a different custom color to the "Assistant" alias using inline CSS
-                    st.markdown(f'<span style="color: #50E3C2; font-weight: bold;">Assistant:</span> {interaction["assistant"]}', unsafe_allow_html=True)
+                st.markdown('<div class="header">', unsafe_allow_html=True)
+                st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: sans-serif;'>MerlinAI</h1>", unsafe_allow_html=True)
+                col1, col2, col3 = st.columns([1,1,1])
+                with col1:
+                    if st.button("Clear Conversation", key="clear_conversation_main"):
+                        st.session_state.conversation = []
+                        st.experimental_rerun()
+                with col2:
+                    if st.button("Generate New Session ID", key="generate_session_id_main"):
+                        st.session_state.session_id = session_generator()
+                        st.experimental_rerun()
+                with col3:
+                    st.image(logo, width=100)
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Conversation
+            with st.container():
+                st.markdown('<div class="conversation">', unsafe_allow_html=True)
+                for interaction in st.session_state.conversation:
+                    if 'user' in interaction:
+                        st.markdown(f'<span style="color: #4A90E2; font-weight: bold;">User:</span> {interaction["user"]}', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<span style="color: #50E3C2; font-weight: bold;">Assistant:</span> {interaction["assistant"]}', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Message input
+            with st.container():
+                st.markdown('<div class="message-input">', unsafe_allow_html=True)
+                user_prompt = st.text_area("Message:", height=100)
+                if st.button("Submit") and user_prompt:
+                    try:
+                        st.session_state.conversation.append({'user': user_prompt})
+                        response = client.invoke_agent(
+                            agentId=BEDROCK_AGENT_ID,
+                            agentAliasId=BEDROCK_AGENT_ALIAS,
+                            sessionId=st.session_state.session_id,
+                            endSession=False,
+                            inputText=user_prompt
+                        )
+                        results = response.get("completion", [])
+                        answer = ""
+                        for stream in results:
+                            answer += process_stream(stream)
+                        st.session_state.conversation.append({'assistant': answer})
+                        st.experimental_rerun()
+                    except Exception as e:
+                        st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
+                        print(f"ERROR: Exception when calling MultiRouteChain: {e}")
+                        st.session_state.conversation.append({'assistant': f"Error occurred: {e}"})
+                        st.experimental_rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
