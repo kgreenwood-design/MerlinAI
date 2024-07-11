@@ -33,14 +33,14 @@ if st.session_state["authentication_status"]:
 
     # Password reset widget
     try:
-        if authenticator.reset_password(st.session_state["username"]):
+        if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
             st.success('Password modified successfully')
     except Exception as e:
         st.error(e)
 
     # Update user details widget
     try:
-        if authenticator.update_user_details(st.session_state["username"]):
+        if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
             st.success('Entries updated successfully')
     except Exception as e:
         st.error(e)
@@ -50,7 +50,7 @@ elif st.session_state["authentication_status"] is False:
 
     # Forgotten password widget
     try:
-        username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password('Forgot password')
+        username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
         if username_forgot_pw:
             st.success('New password sent securely')
             # Random password to be transferred to user securely
@@ -61,7 +61,7 @@ elif st.session_state["authentication_status"] is False:
 
     # Forgotten username widget
     try:
-        username_forgot_username, email_forgot_username = authenticator.forgot_username('Forgot username')
+        username_forgot_username, email_forgot_username = authenticator.forgot_username(fields={'Form name':'Forgot username', 'Email':'Email', 'Submit':'Submit'})
         if username_forgot_username:
             st.success('Username sent securely')
             # Username to be transferred to user securely
@@ -75,7 +75,7 @@ elif st.session_state["authentication_status"] is None:
 
     # New user registration widget
     try:
-        email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(pre_authorization=False)
+        email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(preauthorization=False, fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
         st.success('User registered successfully')
     except Exception as e:
         st.error(e)
