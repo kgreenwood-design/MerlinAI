@@ -66,83 +66,83 @@ authenticator.login()
 
 if st.session_state["authentication_status"]:
     st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
-        st.write(f'Welcome *{st.session_state["name"]}*')
-        st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: sans-serif;'>MerlinAI</h1>", unsafe_allow_html=True)
+    st.write(f'Welcome *{st.session_state["name"]}*')
+    st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: sans-serif;'>MerlinAI</h1>", unsafe_allow_html=True)
 
-        with st.sidebar:
-            authenticator.logout('Logout', 'main')
+    with st.sidebar:
+        authenticator.logout('Logout', 'main')
 
-            with st.expander("Account Settings"):
-                # Password reset widget
-                try:
-                    if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
-                        st.success('Password modified successfully')
-                except Exception as e:
-                    st.error(e)
+        with st.expander("Account Settings"):
+            # Password reset widget
+            try:
+                if authenticator.reset_password(st.session_state["username"], fields={'Form name':'Reset password', 'Current password':'Current password', 'New password':'New password', 'Repeat password':'Repeat password', 'Reset':'Reset'}):
+                    st.success('Password modified successfully')
+            except Exception as e:
+                st.error(e)
 
-                # Update user details widget
-                try:
-                    if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
-                        st.success('Entries updated successfully')
-                except Exception as e:
-                    st.error(e)
+            # Update user details widget
+            try:
+                if authenticator.update_user_details(st.session_state["username"], fields={'Form name':'Update user details', 'Field':'Field', 'Name':'Name', 'Email':'Email', 'New value':'New value', 'Update':'Update'}):
+                    st.success('Entries updated successfully')
+            except Exception as e:
+                st.error(e)
 
-            with st.expander("Session Options"):
-                st.write("Session ID: ", st.session_state.session_id)
-                if st.button("Generate New Session ID", key="generate_session_id_sidebar"):
-                    st.session_state.session_id = session_generator()
-                    st.experimental_rerun()
+        with st.expander("Session Options"):
+            st.write("Session ID: ", st.session_state.session_id)
+            if st.button("Generate New Session ID", key="generate_session_id_sidebar"):
+                st.session_state.session_id = session_generator()
+                st.experimental_rerun()
 
-            with st.expander("Conversation Options"):
-                if st.button("Clear Conversation", key="clear_conversation_sidebar"):
-                    st.session_state.conversation = []
-                    st.experimental_rerun()
+        with st.expander("Conversation Options"):
+            if st.button("Clear Conversation", key="clear_conversation_sidebar"):
+                st.session_state.conversation = []
+                st.experimental_rerun()
 
-    elif st.session_state["authentication_status"] is False:
-        st.error('Username/password is incorrect')
+elif st.session_state["authentication_status"] is False:
+    st.error('Username/password is incorrect')
 
-    if not st.session_state["authentication_status"]:
-        if 'show_forgot_password' not in st.session_state:
-            st.session_state.show_forgot_password = False
-        if 'show_register' not in st.session_state:
-            st.session_state.show_register = False
+if not st.session_state["authentication_status"]:
+    if 'show_forgot_password' not in st.session_state:
+        st.session_state.show_forgot_password = False
+    if 'show_register' not in st.session_state:
+        st.session_state.show_register = False
 
-        col1, col2 = st.columns([1, 1])
+    col1, col2 = st.columns([1, 1])
 
-        if st.session_state.show_forgot_password:
-            with col1:
-                # Forgotten password widget
-                try:
-                    username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
-                    if username_forgot_pw:
-                        st.success('New password sent securely')
-                        st.session_state.show_forgot_password = False
-                        # Random password to be transferred to user securely
-                    elif username_forgot_pw == False:
-                        st.error('Username not found')
-                except Exception as e:
-                    st.error(e)
-
-        if st.session_state.show_register:
-            with col2:
-                # New user registration widget
-                try:
-                    email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
-                    st.success('User registered successfully')
-                    st.session_state.show_register = False
-                except Exception as e:
-                    st.error(e)
-
+    if st.session_state.show_forgot_password:
         with col1:
-            if st.button('Forgot Password?', key="forgot_password_button"):
-                st.session_state.show_forgot_password = not st.session_state.show_forgot_password
-                st.session_state.show_register = False
-        with col2:
-            if st.button('Register', key="register_button"):
-                st.session_state.show_register = not st.session_state.show_register
-                st.session_state.show_forgot_password = False
+            # Forgotten password widget
+            try:
+                username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
+                if username_forgot_pw:
+                    st.success('New password sent securely')
+                    st.session_state.show_forgot_password = False
+                    # Random password to be transferred to user securely
+                elif username_forgot_pw == False:
+                    st.error('Username not found')
+            except Exception as e:
+                st.error(e)
 
-    st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
+    if st.session_state.show_register:
+        with col2:
+            # New user registration widget
+            try:
+                email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
+                st.success('User registered successfully')
+                st.session_state.show_register = False
+            except Exception as e:
+                st.error(e)
+
+    with col1:
+        if st.button('Forgot Password?', key="forgot_password_button"):
+            st.session_state.show_forgot_password = not st.session_state.show_forgot_password
+            st.session_state.show_register = False
+    with col2:
+        if st.button('Register', key="register_button"):
+            st.session_state.show_register = not st.session_state.show_register
+            st.session_state.show_forgot_password = False
+
+st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
 
 
 def format_retrieved_references(references):
