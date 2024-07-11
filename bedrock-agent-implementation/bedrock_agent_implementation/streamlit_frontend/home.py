@@ -18,6 +18,8 @@ authenticator = stauth.Authenticate(
     config['preauthorized']
 )
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
+BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
+client = boto3.client('bedrock-agent-runtime')
 
 name, authentication_status, username = authenticator.login('Login', 'main')
 
