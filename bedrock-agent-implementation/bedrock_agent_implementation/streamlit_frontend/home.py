@@ -30,10 +30,55 @@ if st.session_state["authentication_status"]:
     authenticator.logout('Logout', 'main')
     st.write(f'Welcome *{st.session_state["name"]}*')
     st.title('Conversational AI - Plant Technician')
+
+    # Password reset widget
+    try:
+        if authenticator.reset_password(st.session_state["username"], 'Reset password'):
+            st.success('Password modified successfully')
+    except Exception as e:
+        st.error(e)
+
+    # Update user details widget
+    try:
+        if authenticator.update_user_details(st.session_state["username"], 'Update user details'):
+            st.success('Entries updated successfully')
+    except Exception as e:
+        st.error(e)
+
 elif st.session_state["authentication_status"] is False:
     st.error('Username/password is incorrect')
+
+    # Forgotten password widget
+    try:
+        username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password('Forgot password')
+        if username_forgot_pw:
+            st.success('New password sent securely')
+            # Random password to be transferred to user securely
+        elif username_forgot_pw == False:
+            st.error('Username not found')
+    except Exception as e:
+        st.error(e)
+
+    # Forgotten username widget
+    try:
+        username_forgot_username, email_forgot_username = authenticator.forgot_username('Forgot username')
+        if username_forgot_username:
+            st.success('Username sent securely')
+            # Username to be transferred to user securely
+        else:
+            st.error('Email not found')
+    except Exception as e:
+        st.error(e)
+
 elif st.session_state["authentication_status"] is None:
     st.warning('Please enter your username and password')
+
+    # New user registration widget
+    try:
+        if authenticator.register_user('Register user', preauthorization=False):
+            st.success('User registered successfully')
+    except Exception as e:
+        st.error(e)
 
 def format_retrieved_references(references):
     # Extracting the text and link from the references
