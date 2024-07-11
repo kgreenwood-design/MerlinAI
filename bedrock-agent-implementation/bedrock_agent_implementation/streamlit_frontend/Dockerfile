@@ -25,6 +25,7 @@ COPY requirements.txt /app
 COPY home.py /app
 
 COPY config.yaml /app
+COPY image.png /app
 
 RUN pip3 install -r requirements.txt
 

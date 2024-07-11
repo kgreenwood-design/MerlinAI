@@ -6,10 +6,17 @@ import random
 import string
 
 import yaml
+from PIL import Image
 from yaml.loader import SafeLoader
 
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
+
+# Load the logo image
+logo = Image.open("image.png")
+
+# Display the logo image on the main page
+st.image(logo, use_column_width=True)
 
 # Create the authenticator object
 authenticator = stauth.Authenticate(
@@ -27,7 +34,9 @@ client = boto3.client('bedrock-agent-runtime')
 authenticator.login()
 
 if st.session_state["authentication_status"]:
-    authenticator.logout('Logout', 'main')
+    with st.sidebar:
+        st.image(logo, use_column_width=True)
+        authenticator.logout('Logout', 'main')
     st.write(f'Welcome *{st.session_state["name"]}*')
     st.title('Conversational AI - Plant Technician')
 
@@ -47,6 +56,7 @@ if st.session_state["authentication_status"]:
             st.error(e)
 
 elif st.session_state["authentication_status"] is False:
+    st.image(logo, use_column_width=True)
     st.error('Username/password is incorrect')
 
     if st.button('Forgot Password?'):
@@ -73,6 +83,7 @@ elif st.session_state["authentication_status"] is False:
         st.error(e)
 
 elif st.session_state["authentication_status"] is None:
+    st.image(logo, use_column_width=True)
     st.warning('Please enter your username and password')
 
     # New user registration widget
@@ -155,7 +166,7 @@ def main():
         # Taking user input
         user_prompt = st.text_area("Message:", height=150)
 
-        if user_prompt:
+        if user_prompt and st.button("Submit"):
             try:
                 # Add the user's prompt to the conversation state
                 st.session_state.conversation.append({'user': user_prompt})
