@@ -76,18 +76,11 @@ def main():
     usernames = ["ProductSupport"]
     passwords = ["Alog2024!"]
 
-    authenticator = stauth.Authenticate(
-        names, usernames, passwords, "some_cookie_name", "some_signature_key", cookie_expiry_days=30
-    )
-
-    name, authentication_status, username = authenticator.login("Login", "main")
-
-    if authentication_status:
-        st.success(f"Welcome {name}")
-    elif authentication_status == False:
+    # Directly use the plain passwords for authentication
+    if st.text_input("Username") == usernames[0] and st.text_input("Password", type="password") == passwords[0]:
+        st.success(f"Welcome {names[0]}")
+    else:
         st.error("Username/password is incorrect")
-    elif authentication_status == None:
-        st.warning("Please enter your username and password")
         return
     st.title("Conversational AI - Plant Technician")
 
