@@ -58,13 +58,13 @@ authenticator = stauth.Authenticate(
     config['preauthorized']
 )
 
-# Display the logo above the login container
-st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-st.image(logo, width=300)  # Increased width to make the image bigger
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Create a container for the login form
+# Create a container for the login form and logo
 login_container = st.container()
+
+with login_container:
+    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+    st.image(logo, width=300)  # Increased width to make the image bigger
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with login_container:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
