@@ -11,11 +11,11 @@ with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
 
 authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
+    credentials=config['credentials'],
+    cookie_name=config['cookie']['name'],
+    key=config['cookie']['key'],
+    cookie_expiry_days=config['cookie']['expiry_days'],
+    preauthorized=config['preauthorized']
 )
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
@@ -24,8 +24,8 @@ client = boto3.client('bedrock-agent-runtime')
 name, authentication_status, username = authenticator.login('Login', 'main')
 
 if authentication_status:
-    authenticator.logout('Logout', 'main')
-    st.write(f'Welcome *{name}*')
+    authenticator.logout('Logout', 'main', key='logout')
+    st.success(f'Welcome *{name}*')
     st.title('Conversational AI - Plant Technician')
 elif authentication_status == False:
     st.error('Username/password is incorrect')
