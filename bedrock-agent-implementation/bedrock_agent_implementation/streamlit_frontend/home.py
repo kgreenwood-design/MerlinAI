@@ -14,12 +14,12 @@ config = {
             'ProductSupport': {
                 'email': 'user1@example.com',
                 'name': 'Product Support Team',
-                'password': stauth.Hasher(['Alog2024!']).generate()[0]
+                'password': 'Alog2024!'
             },
             'Admin': {
                 'email': 'user2@example.com',
                 'name': 'Admin',
-                'password': stauth.Hasher(['Alog2024!']).generate()[0]
+                'password': 'Alog2024!'
             }
         }
     },
