@@ -59,39 +59,31 @@ elif st.session_state["authentication_status"] is False:
     st.image(logo, use_column_width=True)
     st.error('Username/password is incorrect')
 
-    if st.button('Forgot Password?'):
-        # Forgotten password widget
-        try:
-            username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
-            if username_forgot_pw:
-                st.success('New password sent securely')
-                # Random password to be transferred to user securely
-            elif username_forgot_pw == False:
-                st.error('Username not found')
-        except Exception as e:
-            st.error(e)
-
-    # Forgotten username widget
-    try:
-        username_forgot_username, email_forgot_username = authenticator.forgot_username(fields={'Form name':'Forgot username', 'Email':'Email', 'Submit':'Submit'})
-        if username_forgot_username:
-            st.success('Username sent securely')
-            # Username to be transferred to user securely
-        else:
-            st.error('Email not found')
-    except Exception as e:
-        st.error(e)
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button('Forgot Password?'):
+            # Forgotten password widget
+            try:
+                username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
+                if username_forgot_pw:
+                    st.success('New password sent securely')
+                    # Random password to be transferred to user securely
+                elif username_forgot_pw == False:
+                    st.error('Username not found')
+            except Exception as e:
+                st.error(e)
+    with col2:
+        if st.button('Register'):
+            # New user registration widget
+            try:
+                email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
+                st.success('User registered successfully')
+            except Exception as e:
+                st.error(e)
 
 elif st.session_state["authentication_status"] is None:
     st.image(logo, use_column_width=True)
     st.warning('Please enter your username and password')
-
-    # New user registration widget
-    try:
-        email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
-        st.success('User registered successfully')
-    except Exception as e:
-        st.error(e)
 
 def format_retrieved_references(references):
     # Extracting the text and link from the references
