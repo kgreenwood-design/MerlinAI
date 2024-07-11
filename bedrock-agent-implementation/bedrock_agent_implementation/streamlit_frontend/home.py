@@ -103,11 +103,11 @@ if not st.session_state["authentication_status"]:
             except Exception as e:
                 st.error(e)
     with col1:
-        if st.button('Forgot Password?'):
+        if st.button('Forgot Password?', key="forgot_password_button"):
             st.session_state.show_forgot_password = not st.session_state.show_forgot_password
             st.session_state.show_register = False
     with col2:
-        if st.button('Register'):
+        if st.button('Register', key="register_button"):
             st.session_state.show_register = not st.session_state.show_register
             st.session_state.show_forgot_password = False
         st.warning('Please enter your username and password')
@@ -214,7 +214,7 @@ def main():
                     endSession=False,
                     inputText=user_prompt
                 )
-                results = response.get("completion")
+                results = response.get("completion", [])
                 answer = ""
                 for stream in results:
                     answer += process_stream(stream)
