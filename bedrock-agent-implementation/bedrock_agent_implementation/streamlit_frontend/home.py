@@ -29,8 +29,6 @@ BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
 # Render the login widget
-# Display the logo image within the login container
-st.image(logo, width=150)
 authenticator.login()
 
 if st.session_state["authentication_status"]:
@@ -169,7 +167,10 @@ def main():
         st.session_state.session_id = session_generator()
 
     if st.session_state["authentication_status"]:
-        # Taking user input
+        # Display the logo image within the message box
+        st.image(logo, width=100)
+
+        # Taking user input        
         user_prompt = st.text_area("Message:", height=150)
 
         if user_prompt and st.button("Submit"):
