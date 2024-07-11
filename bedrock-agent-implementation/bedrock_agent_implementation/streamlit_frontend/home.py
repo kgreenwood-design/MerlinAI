@@ -31,8 +31,6 @@ BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
 
 # Render the login widget
-# Display the logo image within the login container
-st.image(logo, width=200)
 authenticator.login()
 
 if st.session_state["authentication_status"]:
@@ -58,17 +56,17 @@ if st.session_state["authentication_status"]:
 
         with st.expander("Session Options"):
             st.write("Session ID: ", st.session_state.session_id)
-            if st.button("Generate New Session ID"):
+            if st.button("Generate New Session ID", key="generate_session_id_sidebar"):
                 st.session_state.session_id = session_generator()
                 st.experimental_rerun()
 
         with st.expander("Conversation Options"):
-            if st.button("Clear Conversation"):
+            if st.button("Clear Conversation", key="clear_conversation_sidebar"):
                 st.session_state.conversation = []
                 st.experimental_rerun()
 
     st.write(f'Welcome *{st.session_state["name"]}*')
-    st.title('Conversational AI - Plant Technician')
+    st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: Disney;'>MerlinAI</h1>", unsafe_allow_html=True)
 
 elif st.session_state["authentication_status"] is False:
     st.error('Username/password is incorrect')
@@ -192,10 +190,10 @@ def main():
         user_prompt = st.text_area("Message:", height=150)
 
         # Common buttons
-        if st.button("Clear Conversation"):
+        if st.button("Clear Conversation", key="clear_conversation_main"):
             st.session_state.conversation = []
             st.experimental_rerun()
-        if st.button("Generate New Session ID"):
+        if st.button("Generate New Session ID", key="generate_session_id_main"):
             st.session_state.session_id = session_generator()
             st.experimental_rerun()
 
