@@ -7,8 +7,12 @@ import os
 import random
 import string
 
-with open('config.yaml') as file:
-    config = yaml.load(file, Loader=SafeLoader)
+if os.path.exists('config.yaml'):
+    with open('config.yaml') as file:
+        config = yaml.load(file, Loader=SafeLoader)
+else:
+    st.error("Configuration file 'config.yaml' not found.")
+    st.stop()
 
 authenticator = stauth.Authenticate(
     credentials=config['credentials'],
