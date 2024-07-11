@@ -31,13 +31,13 @@ client = boto3.client('bedrock-agent-runtime')
 
 # Render the login widget
 # Display the logo image within the login container
-st.image(logo, width=150)
+st.image(logo, width=200)
 authenticator.login()
 
 if st.session_state["authentication_status"]:
     with st.sidebar:
         # Display the logo image at the top of the sidebar
-        st.image(logo, width=150)
+        st.image(logo, width=250)
         authenticator.logout('Logout', 'main')
 
         with st.expander("Account Settings"):
@@ -72,45 +72,46 @@ if st.session_state["authentication_status"]:
 elif st.session_state["authentication_status"] is False:
     st.error('Username/password is incorrect')
 
-if 'show_forgot_password' not in st.session_state:
-    st.session_state.show_forgot_password = False
-if 'show_register' not in st.session_state:
-    st.session_state.show_register = False
-
-col1, col2 = st.columns(2)
-
-if st.session_state.show_forgot_password:
-    with col1:
-        # Forgotten password widget
-        try:
-            username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
-            if username_forgot_pw:
-                st.success('New password sent securely')
-                st.session_state.show_forgot_password = False
-                # Random password to be transferred to user securely
-            elif username_forgot_pw == False:
-                st.error('Username not found')
-        except Exception as e:
-            st.error(e)
-
-if st.session_state.show_register:
-    with col2:
-        # New user registration widget
-        try:
-            email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
-            st.success('User registered successfully')
-            st.session_state.show_register = False
-        except Exception as e:
-            st.error(e)
-with col1:
-    if st.button('Forgot Password?'):
-        st.session_state.show_forgot_password = not st.session_state.show_forgot_password
-        st.session_state.show_register = False
-with col2:
-    if st.button('Register'):
-        st.session_state.show_register = not st.session_state.show_register
+if not st.session_state["authentication_status"]:
+    if 'show_forgot_password' not in st.session_state:
         st.session_state.show_forgot_password = False
-    st.warning('Please enter your username and password')
+    if 'show_register' not in st.session_state:
+        st.session_state.show_register = False
+
+    col1, col2 = st.columns(2)
+
+    if st.session_state.show_forgot_password:
+        with col1:
+            # Forgotten password widget
+            try:
+                username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
+                if username_forgot_pw:
+                    st.success('New password sent securely')
+                    st.session_state.show_forgot_password = False
+                    # Random password to be transferred to user securely
+                elif username_forgot_pw == False:
+                    st.error('Username not found')
+            except Exception as e:
+                st.error(e)
+
+    if st.session_state.show_register:
+        with col2:
+            # New user registration widget
+            try:
+                email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
+                st.success('User registered successfully')
+                st.session_state.show_register = False
+            except Exception as e:
+                st.error(e)
+    with col1:
+        if st.button('Forgot Password?'):
+            st.session_state.show_forgot_password = not st.session_state.show_forgot_password
+            st.session_state.show_register = False
+    with col2:
+        if st.button('Register'):
+            st.session_state.show_register = not st.session_state.show_register
+            st.session_state.show_forgot_password = False
+        st.warning('Please enter your username and password')
 
 
 def format_retrieved_references(references):
@@ -186,8 +187,16 @@ def main():
         # Display the logo image within the message box
         st.image(logo, width=200)
 
-        # Taking user input        
+        # Taking user input
         user_prompt = st.text_area("Message:", height=150)
+
+        # Common buttons
+        if st.button("Clear Conversation"):
+            st.session_state.conversation = []
+            st.experimental_rerun()
+        if st.button("Generate New Session ID"):
+            st.session_state.session_id = session_generator()
+            st.experimental_rerun()
 
         if st.button("Submit") and user_prompt:
             try:
