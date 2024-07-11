@@ -223,6 +223,15 @@ def main():
     .stApp {
         max-width: 800px;
         margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    .chat-container {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        margin-bottom: 80px;
     }
     .chat-message {
         padding: 1rem;
@@ -254,6 +263,7 @@ def main():
         padding: 1rem;
         background-color: white;
         box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        z-index: 1000;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -267,12 +277,16 @@ def main():
     if st.session_state["authentication_status"]:
         st.title("MerlinAI")
 
-        # Display conversation
-        for interaction in st.session_state.conversation:
-            if 'user' in interaction:
-                st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["user"]}</div></div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["assistant"]}</div></div>', unsafe_allow_html=True)
+        # Chat container
+        chat_container = st.container()
+        with chat_container:
+            st.markdown('<div class="chat-container">', unsafe_allow_html=True)
+            for interaction in st.session_state.conversation:
+                if 'user' in interaction:
+                    st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["user"]}</div></div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["assistant"]}</div></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
         # Input container
         with st.container():
