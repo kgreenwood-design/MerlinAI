@@ -59,27 +59,44 @@ elif st.session_state["authentication_status"] is False:
     st.image(logo, use_column_width=True)
     st.error('Username/password is incorrect')
 
+    if 'show_forgot_password' not in st.session_state:
+        st.session_state.show_forgot_password = False
+    if 'show_register' not in st.session_state:
+        st.session_state.show_register = False
+
     col1, col2 = st.columns(2)
-    with col1:
-        if st.button('Forgot Password?'):
+
+    if st.session_state.show_forgot_password:
+        with col1:
             # Forgotten password widget
             try:
                 username_forgot_pw, email_forgot_password, random_password = authenticator.forgot_password(fields={'Form name':'Forgot password', 'Username':'Username', 'Submit':'Submit'})
                 if username_forgot_pw:
                     st.success('New password sent securely')
+                    st.session_state.show_forgot_password = False
                     # Random password to be transferred to user securely
                 elif username_forgot_pw == False:
                     st.error('Username not found')
             except Exception as e:
                 st.error(e)
-    with col2:
-        if st.button('Register'):
+
+    if st.session_state.show_register:
+        with col2:
             # New user registration widget
             try:
                 email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(fields={'Form name':'Register user', 'Email':'Email', 'Username':'Username', 'Password':'Password', 'Repeat password':'Repeat password', 'Register':'Register'})
                 st.success('User registered successfully')
+                st.session_state.show_register = False
             except Exception as e:
                 st.error(e)
+    with col1:
+        if st.button('Forgot Password?'):
+            st.session_state.show_forgot_password = not st.session_state.show_forgot_password
+            st.session_state.show_register = False
+    with col2:
+        if st.button('Register'):
+            st.session_state.show_register = not st.session_state.show_register
+            st.session_state.show_forgot_password = False
 
 elif st.session_state["authentication_status"] is None:
     st.image(logo, use_column_width=True)
