@@ -183,11 +183,15 @@ def main():
         st.session_state.session_id = session_generator()
 
     if st.session_state["authentication_status"]:
-        # Display the logo image within the message box
-        st.image(logo, width=200)
+        col1, col2 = st.columns([3, 1])
 
-        # Taking user input
-        user_prompt = st.text_area("Message:", height=150)
+        with col1:
+            # Taking user input        
+            user_prompt = st.text_area("Message:", height=150)
+
+        with col2:
+            # Display the logo image within the message box
+            st.image(logo, width=300)
 
         # Common buttons
         if st.button("Clear Conversation", key="clear_conversation_main"):
