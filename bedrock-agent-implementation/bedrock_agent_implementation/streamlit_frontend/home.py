@@ -111,6 +111,7 @@ with col2:
         st.session_state.show_forgot_password = False
     st.warning('Please enter your username and password')
 
+
 def format_retrieved_references(references):
     # Extracting the text and link from the references
     for reference in references:
