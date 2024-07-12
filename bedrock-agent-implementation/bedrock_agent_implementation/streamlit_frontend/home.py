@@ -18,8 +18,18 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 import pickle
 import spacy
+import subprocess
+import sys
 
-nlp = spacy.load("en_core_web_sm")
+def download_spacy_model(model_name):
+    subprocess.check_call([sys.executable, "-m", "spacy", "download", model_name])
+
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    print("Downloading spaCy model...")
+    download_spacy_model("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 
 def plot_device_metrics(device_id):
     # This is a placeholder. In reality, you'd fetch this data from your database
