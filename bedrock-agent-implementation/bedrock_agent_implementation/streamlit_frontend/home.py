@@ -19,12 +19,17 @@ from sklearn.cluster import KMeans
 import pickle
 import spacy
 import spacy
+import subprocess
+import sys
+
+def download_spacy_model():
+    subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
 
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     print("Downloading spaCy model...")
-    spacy.cli.download("en_core_web_sm")
+    download_spacy_model()
     nlp = spacy.load("en_core_web_sm")
 
 def plot_device_metrics(device_id):
