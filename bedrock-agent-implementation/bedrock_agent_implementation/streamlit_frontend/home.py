@@ -589,21 +589,32 @@ def process_user_input(user_prompt):
         
         # Check if the answer contains any actionable commands
         if "display_metrics" in answer.lower():
-            device_id = extract_device_id(answer)  # You need to implement this function
-            plot_device_metrics(device_id)
+            device_id = extract_device_id(answer)
+            if device_id:
+                try:
+                    plot_device_metrics(device_id)
+                except Exception as plot_error:
+                    st.error(f"Error plotting metrics for device {device_id}: {plot_error}")
+            else:
+                st.warning("Could not extract device ID from the response.")
         elif "upload_file" in answer.lower():
             st.info("Please use the file uploader in the sidebar to upload a CSV file.")
+        
+        # Check if the answer contains an error message from Lambda
+        if "Lambda function encountered a problem" in answer:
+            st.warning("The system encountered an issue while processing your request. This might be due to requesting information about multiple devices at once. Please try asking about a single device or a specific piece of information.")
+            answer += "\n\nNote: For best results, please ask about one device at a time or request specific information."
         
         # Save assistant's response to DynamoDB
         save_conversation(st.session_state.session_id, 'assistant', answer)
         
-        st.experimental_rerun()
+        st.write(answer)
     except Exception as e:
-        st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
-        print(f"ERROR: Exception when calling MultiRouteChain: {e}")
+        error_message = f"Error occurred: {str(e)}"
+        st.error(error_message)
+        print(f"ERROR: Exception when processing user input: {e}")
         # Save error message to DynamoDB
-        save_conversation(st.session_state.session_id, 'assistant', f"Error occurred: {e}")
-        st.experimental_rerun()
+        save_conversation(st.session_state.session_id, 'assistant', error_message)
 
 def extract_device_id(text):
     # Implement logic to extract device ID from the text
