@@ -414,6 +414,18 @@ def get_conversation_history(session_id):
         st.warning("Unable to retrieve conversation history: DynamoDB table not configured.")
         return []
 
+def get_all_session_ids():
+    if conversation_table:
+        response = conversation_table.scan(
+            ProjectionExpression='session_id',
+            Select='SPECIFIC_ATTRIBUTES'
+        )
+        session_ids = list(set([item['session_id'] for item in response['Items']]))
+        return sorted(session_ids, reverse=True)
+    else:
+        st.warning("Unable to retrieve session IDs: DynamoDB table not configured.")
+        return []
+
 def main():
     # Check for session timeout
     check_session_timeout()
@@ -469,13 +481,6 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    # Initialize the session ID
-    if 'session_id' not in st.session_state:
-        st.session_state.session_id = session_generator()
-
-    # Load conversation history from DynamoDB
-    conversation_history = get_conversation_history(st.session_state.session_id)
-
     if st.session_state["authentication_status"]:
         st.title("MerlinAI")
 
@@ -489,6 +494,24 @@ def main():
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Chat", "Device Metrics", "Data Visualization", "Data Analysis", "Advanced Analysis", "Image Display"])
         
         with tab1:
+            # Session management
+            st.sidebar.subheader("Session Management")
+            session_option = st.sidebar.radio("Choose session option:", ["Current Session", "Load Past Session", "New Session"])
+
+            if session_option == "Current Session":
+                if 'session_id' not in st.session_state:
+                    st.session_state.session_id = session_generator()
+            elif session_option == "Load Past Session":
+                past_sessions = get_all_session_ids()
+                selected_session = st.sidebar.selectbox("Select a past session:", past_sessions)
+                if selected_session:
+                    st.session_state.session_id = selected_session
+            else:  # New Session
+                st.session_state.session_id = session_generator()
+
+            # Load conversation history from DynamoDB
+            conversation_history = get_conversation_history(st.session_state.session_id)
+
             # Display conversation history
             for interaction in conversation_history:
                 if interaction['role'] == 'user':
@@ -500,7 +523,7 @@ def main():
             with st.container():
                 st.markdown('<div class="input-container">', unsafe_allow_html=True)
                 user_prompt = st.text_input("Message:", key="user_input")
-                col1, col2, col3 = st.columns([1,1,1])
+                col1, col2 = st.columns([1,1])
                 with col1:
                     if st.button("Submit"):
                         if user_prompt:
@@ -509,10 +532,6 @@ def main():
                     if st.button("Clear Conversation"):
                         # Clear conversation history from DynamoDB
                         clear_conversation_history(st.session_state.session_id)
-                        st.experimental_rerun()
-                with col3:
-                    if st.button("New Session"):
-                        st.session_state.session_id = session_generator()
                         st.experimental_rerun()
                 st.markdown('</div>', unsafe_allow_html=True)
         
