@@ -389,7 +389,7 @@ def main():
     st.markdown("""
     <style>
     .stApp {
-        max-width: 800px;
+        max-width: 1200px;
         margin: 0 auto;
     }
     .chat-message {
@@ -423,6 +423,16 @@ def main():
         background-color: white;
         box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
     }
+    .stSelectbox {
+        margin-bottom: 1rem;
+    }
+    .stPlotlyChart {
+        margin-top: 2rem;
+    }
+    .st-emotion-cache-16idsys p {
+        font-size: 14px;
+        margin-bottom: 0.5rem;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -435,8 +445,11 @@ def main():
     if st.session_state["authentication_status"]:
         st.title("MerlinAI")
 
+        # Load user-specific data
+        user_data = load_user_data(st.session_state["username"])
+
         # Add tabs for different functionalities
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Chat", "Device Metrics", "Voice Input", "File Upload", "Image Display"])
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Chat", "Device Metrics", "Data Visualization", "Data Analysis", "Advanced Analysis", "Image Display"])
         
         with tab1:
             # Display conversation
@@ -471,19 +484,47 @@ def main():
                 plot_device_metrics(device_id)
         
         with tab3:
-            if st.button("Start Voice Input"):
-                user_input = voice_input()
-                if user_input:
-                    process_user_input(user_input)
-        
-        with tab4:
-            uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+            st.subheader("Data Visualization")
+            uploaded_file = st.file_uploader("Choose a CSV or Excel file", type=["csv", "xlsx"])
             if uploaded_file is not None:
-                data = load_csv(uploaded_file)
-                if data is not None: 
-                    st.write(data)
-        
+                df = load_and_process_data(uploaded_file)
+                if df is not None:
+                    st.write(df.head())
+                    plot_type = st.selectbox("Select plot type", ["Line Plot", "Bar Plot", "Scatter Plot", "Box Plot"])
+                    x_axis = st.selectbox("Select X-axis", df.columns)
+                    y_axis = st.selectbox("Select Y-axis", df.columns)
+                    fig = plot_data(df, plot_type, x_axis, y_axis)
+                    if fig:
+                        st.plotly_chart(fig)
+                        if st.button("Save Visualization"):
+                            save_visualization(fig, f"visualizations/{st.session_state['username']}_{plot_type}.pkl")
+                            st.success("Visualization saved!")
+
+        with tab4:
+            st.subheader("Data Analysis")
+            if 'df' in locals():
+                st.write("Data Summary:")
+                st.write(df.describe())
+                
+                st.write("Correlation Matrix:")
+                corr_matrix = df.corr()
+                fig_corr = px.imshow(corr_matrix, text_auto=True)
+                st.plotly_chart(fig_corr)
+                
+                st.write("Data Distribution:")
+                column = st.selectbox("Select a column for distribution analysis", df.columns)
+                fig_dist = px.histogram(df, x=column, marginal="box")
+                st.plotly_chart(fig_dist)
+
         with tab5:
+            st.subheader("Advanced Analysis")
+            if 'df' in locals():
+                if st.button("Perform Advanced Analysis"):
+                    pca_fig, explained_variance = perform_advanced_analysis(df)
+                    st.plotly_chart(pca_fig)
+                    st.plotly_chart(explained_variance)
+
+        with tab6:
             image_path = st.text_input("Enter the path to your image:")
             if image_path:
                 display_image(image_path)
