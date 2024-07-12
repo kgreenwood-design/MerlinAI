@@ -21,7 +21,6 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 import pickle
 import spacy
-import spacy
 import subprocess
 import sys
 
@@ -236,14 +235,14 @@ authenticator = stauth.Authenticate(
 )
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
-DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'default_conversation_table')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME')
 client = boto3.client('bedrock-agent-runtime')
 dynamodb = boto3.resource('dynamodb')
 
 if DYNAMODB_TABLE_NAME:
     conversation_table = dynamodb.Table(DYNAMODB_TABLE_NAME)
 else:
-    st.warning("DYNAMODB_TABLE_NAME environment variable is not set. Some features may not work correctly.")
+    st.error("DYNAMODB_TABLE_NAME environment variable is not set. Conversation history will not be saved.")
     conversation_table = None
 
 # Render the login widget
