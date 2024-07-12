@@ -11,6 +11,15 @@ import pandas as pd
 import numpy as np
 import yaml
 from yaml.loader import SafeLoader
+import json
+import plotly.express as px
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+import pickle
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
 
 def plot_device_metrics(device_id):
     # This is a placeholder. In reality, you'd fetch this data from your database
@@ -28,6 +37,110 @@ def plot_device_metrics(device_id):
     
     fig.update_layout(title=f'Metrics for Device {device_id}', xaxis_title='Time', yaxis_title='Value')
     st.plotly_chart(fig)
+
+def load_and_process_data(file):
+    if file.name.endswith('.csv'):
+        df = pd.read_csv(file)
+    elif file.name.endswith('.xlsx'):
+        df = pd.read_excel(file)
+    else:
+        st.error("Unsupported file format. Please upload a CSV or Excel file.")
+        return None
+    return df
+
+def plot_data(df, plot_type, x_axis, y_axis):
+    if plot_type == "Line Plot":
+        fig = px.line(df, x=x_axis, y=y_axis)
+    elif plot_type == "Bar Plot":
+        fig = px.bar(df, x=x_axis, y=y_axis)
+    elif plot_type == "Scatter Plot":
+        fig = px.scatter(df, x=x_axis, y=y_axis)
+    elif plot_type == "Box Plot":
+        fig = px.box(df, x=x_axis, y=y_axis)
+    else:
+        st.error("Unsupported plot type.")
+        return None
+    
+    fig.update_layout(
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="left",
+                buttons=list([
+                    dict(args=["type", "scatter"], label="Scatter", method="restyle"),
+                    dict(args=["type", "line"], label="Line", method="restyle"),
+                    dict(args=["type", "bar"], label="Bar", method="restyle")
+                ]),
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.11,
+                xanchor="left",
+                y=1.1,
+                yanchor="top"
+            ),
+        ]
+    )
+    return fig
+
+def perform_advanced_analysis(df):
+    # Prepare data
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
+    X = df[numeric_cols]
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Perform PCA
+    pca = PCA()
+    pca_result = pca.fit_transform(X_scaled)
+    pca_df = pd.DataFrame(data=pca_result[:, :2], columns=['PC1', 'PC2'])
+
+    # Perform K-means clustering
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    kmeans_result = kmeans.fit_predict(X_scaled)
+
+    # Create visualizations
+    pca_fig = px.scatter(pca_df, x='PC1', y='PC2', color=kmeans_result, 
+                         title='PCA with K-means Clustering')
+    
+    explained_variance = px.bar(x=range(1, len(pca.explained_variance_ratio_)+1),
+                                y=pca.explained_variance_ratio_,
+                                title='Explained Variance Ratio')
+
+    return pca_fig, explained_variance
+
+def save_visualization(fig, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(fig, f)
+
+def load_visualization(filename):
+    with open(filename, 'rb') as f:
+        return pickle.load(f)
+
+def parse_data_query(query):
+    doc = nlp(query)
+    plot_type = None
+    columns = []
+    
+    for token in doc:
+        if token.text.lower() in ["line", "bar", "scatter", "box"]:
+            plot_type = token.text.lower() + " plot"
+        if token.dep_ == "dobj" and token.head.pos_ == "VERB":
+            columns.append(token.text)
+    
+    return plot_type, columns
+
+def save_user_data(username, data):
+    if not os.path.exists('user_data'):
+        os.makedirs('user_data')
+    with open(f'user_data/{username}.json', 'w') as f:
+        json.dump(data, f)
+
+def load_user_data(username):
+    try:
+        with open(f'user_data/{username}.json', 'r') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
 
 def voice_input():
     r = sr.Recognizer()
