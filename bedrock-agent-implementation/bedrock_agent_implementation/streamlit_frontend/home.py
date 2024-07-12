@@ -201,32 +201,15 @@ from yaml.loader import SafeLoader
 # Custom CSS for styling
 st.markdown("""
 <style>
-    .main {
-        padding-top: 2rem;
-    }
     .stApp {
         max-width: 800px;
         margin: 0 auto;
-    }
-    .login-container {
-        background-color: #f0f2f6;
-        padding: 2rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    .logo-container {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 2rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
-
-# Load the logo image
-logo = Image.open("image.png")
 
 # Create the authenticator object
 authenticator = stauth.Authenticate(
@@ -236,17 +219,6 @@ authenticator = stauth.Authenticate(
     config['cookie']['expiry_days'],
     config['preauthorized']
 )
-
-# Create a container for the login form and logo
-login_container = st.container()
-
-with login_container:
-    st.markdown('<div class="logo-container">', unsafe_allow_html=True)
-    st.image(logo, width=300)  # Increased width to make the image bigger
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with login_container:
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
 client = boto3.client('bedrock-agent-runtime')
@@ -255,11 +227,12 @@ client = boto3.client('bedrock-agent-runtime')
 authenticator.login()
 
 if st.session_state["authentication_status"]:
-    st.markdown('</div>', unsafe_allow_html=True)  # Close login-container
-    st.write(f'Welcome *{st.session_state["name"]}*')
-    st.markdown("<h1 style='text-align: center; color: #4A90E2; font-family: sans-serif;'>MerlinAI</h1>", unsafe_allow_html=True)
-
     with st.sidebar:
+        # Load and display the logo image
+        logo = Image.open("image.png")
+        st.image(logo, width=200)  # Adjust width as needed
+        
+        st.write(f'Welcome *{st.session_state["name"]}*')
         authenticator.logout('Logout', 'main')
 
         with st.expander("Account Settings"):
