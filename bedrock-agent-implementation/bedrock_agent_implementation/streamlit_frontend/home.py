@@ -11,6 +11,7 @@ import time
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
+from datetime import datetime, timedelta
 import yaml
 from yaml.loader import SafeLoader
 import json
@@ -188,6 +189,18 @@ def session_generator():
     print("Session ID: " + str(pattern))
 
     return pattern
+
+def check_session_timeout():
+    if 'last_activity' in st.session_state:
+        last_activity = st.session_state.last_activity
+        if datetime.now() - last_activity > timedelta(minutes=10):
+            st.session_state.authentication_status = None
+            st.session_state.username = None
+            st.session_state.name = None
+            st.session_state.session_id = None
+            st.warning("Your session has expired due to inactivity. Please log in again.")
+            st.experimental_rerun()
+    st.session_state.last_activity = datetime.now()
 
 def load_csv(uploaded_file):
     try:
@@ -391,6 +404,9 @@ def get_conversation_history(session_id):
     return response['Items']
 
 def main():
+    # Check for session timeout
+    check_session_timeout()
+
     # Add custom CSS for layout
     st.markdown("""
     <style>
@@ -454,6 +470,9 @@ def main():
 
         # Load user-specific data
         user_data = load_user_data(st.session_state["username"])
+
+        # Update last activity time
+        st.session_state.last_activity = datetime.now()
 
         # Add tabs for different functionalities
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Chat", "Device Metrics", "Data Visualization", "Data Analysis", "Advanced Analysis", "Image Display"])
