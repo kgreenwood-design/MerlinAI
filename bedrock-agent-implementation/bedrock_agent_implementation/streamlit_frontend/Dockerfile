@@ -28,6 +28,8 @@ COPY config.yaml /app
 COPY image.png /app
 
 RUN pip3 install -r requirements.txt
+RUN pip3 install pandas numpy plotly scikit-learn spacy
+RUN python3 -m spacy download en_core_web_sm
 
 RUN chown $USERNAME:$USERNAME /app
 
