@@ -427,6 +427,10 @@ def get_all_session_ids():
         return []
 
 def main():
+    # Initialize session_id if it doesn't exist
+    if 'session_id' not in st.session_state:
+        st.session_state.session_id = session_generator()
+
     # Check for session timeout
     check_session_timeout()
 
@@ -499,8 +503,7 @@ def main():
             session_option = st.sidebar.radio("Choose session option:", ["Current Session", "Load Past Session", "New Session"])
 
             if session_option == "Current Session":
-                if 'session_id' not in st.session_state:
-                    st.session_state.session_id = session_generator()
+                pass  # We already initialized session_id at the beginning of main()
             elif session_option == "Load Past Session":
                 past_sessions = get_all_session_ids()
                 selected_session = st.sidebar.selectbox("Select a past session:", past_sessions)
