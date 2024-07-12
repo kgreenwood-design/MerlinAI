@@ -6,6 +6,8 @@ import random
 import string
 from PIL import Image
 import speech_recognition as sr
+from boto3.dynamodb.conditions import Key
+import time
 import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
@@ -221,7 +223,10 @@ authenticator = stauth.Authenticate(
 )
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME')
 client = boto3.client('bedrock-agent-runtime')
+dynamodb = boto3.resource('dynamodb')
+conversation_table = dynamodb.Table(DYNAMODB_TABLE_NAME)
 
 # Render the login widget
 authenticator.login()
@@ -368,6 +373,23 @@ def session_generator():
 
     return pattern
 
+def save_conversation(session_id, role, content):
+    conversation_table.put_item(
+        Item={
+            'session_id': session_id,
+            'timestamp': int(time.time() * 1000),
+            'role': role,
+            'content': content
+        }
+    )
+
+def get_conversation_history(session_id):
+    response = conversation_table.query(
+        KeyConditionExpression=Key('session_id').eq(session_id),
+        ScanIndexForward=True
+    )
+    return response['Items']
+
 def main():
     # Add custom CSS for layout
     st.markdown("""
@@ -420,11 +442,12 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    # Initialize the conversation state and session ID
-    if 'conversation' not in st.session_state:
-        st.session_state.conversation = []
+    # Initialize the session ID
     if 'session_id' not in st.session_state:
         st.session_state.session_id = session_generator()
+
+    # Load conversation history from DynamoDB
+    conversation_history = get_conversation_history(st.session_state.session_id)
 
     if st.session_state["authentication_status"]:
         st.title("MerlinAI")
@@ -436,12 +459,12 @@ def main():
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Chat", "Device Metrics", "Data Visualization", "Data Analysis", "Advanced Analysis", "Image Display"])
         
         with tab1:
-            # Display conversation
-            for interaction in st.session_state.conversation:
-                if 'user' in interaction:
-                    st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["user"]}</div></div>', unsafe_allow_html=True)
+            # Display conversation history
+            for interaction in conversation_history:
+                if interaction['role'] == 'user':
+                    st.markdown(f'<div class="chat-message user"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["content"]}</div></div>', unsafe_allow_html=True)
                 else:
-                    st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["assistant"]}</div></div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="chat-message assistant"><img src="https://via.placeholder.com/40" class="avatar"><div class="message">{interaction["content"]}</div></div>', unsafe_allow_html=True)
 
             # Input container
             with st.container():
@@ -454,7 +477,8 @@ def main():
                             process_user_input(user_prompt)
                 with col2:
                     if st.button("Clear Conversation"):
-                        st.session_state.conversation = []
+                        # Clear conversation history from DynamoDB
+                        clear_conversation_history(st.session_state.session_id)
                         st.experimental_rerun()
                 with col3:
                     if st.button("New Session"):
@@ -518,7 +542,9 @@ def main():
 
 def process_user_input(user_prompt):
     try:
-        st.session_state.conversation.append({'user': user_prompt})
+        # Save user message to DynamoDB
+        save_conversation(st.session_state.session_id, 'user', user_prompt)
+        
         response = client.invoke_agent(
             agentId=BEDROCK_AGENT_ID,
             agentAliasId=BEDROCK_AGENT_ALIAS,
@@ -538,12 +564,15 @@ def process_user_input(user_prompt):
         elif "upload_file" in answer.lower():
             st.info("Please use the file uploader in the sidebar to upload a CSV file.")
         
-        st.session_state.conversation.append({'assistant': answer})
+        # Save assistant's response to DynamoDB
+        save_conversation(st.session_state.session_id, 'assistant', answer)
+        
         st.experimental_rerun()
     except Exception as e:
         st.error(f"Error occurred when calling MultiRouteChain. Please review application logs for more information.")
         print(f"ERROR: Exception when calling MultiRouteChain: {e}")
-        st.session_state.conversation.append({'assistant': f"Error occurred: {e}"})
+        # Save error message to DynamoDB
+        save_conversation(st.session_state.session_id, 'assistant', f"Error occurred: {e}")
         st.experimental_rerun()
 
 def extract_device_id(text):
@@ -555,3 +584,18 @@ def extract_device_id(text):
 
 if __name__ == '__main__':
     main()
+def clear_conversation_history(session_id):
+    # Query all items for the session
+    response = conversation_table.query(
+        KeyConditionExpression=Key('session_id').eq(session_id)
+    )
+    
+    # Delete each item
+    with conversation_table.batch_writer() as batch:
+        for item in response['Items']:
+            batch.delete_item(
+                Key={
+                    'session_id': item['session_id'],
+                    'timestamp': item['timestamp']
+                }
+            )
