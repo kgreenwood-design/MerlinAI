@@ -566,15 +566,24 @@ def main():
                 st.write("Data Summary:")
                 st.write(df.describe())
                 
-                st.write("Correlation Matrix:")
-                corr_matrix = df.corr()
-                fig_corr = px.imshow(corr_matrix, text_auto=True)
-                st.plotly_chart(fig_corr)
+                # Select only numeric columns
+                numeric_df = df.select_dtypes(include=['float64', 'int64'])
+                
+                if not numeric_df.empty:
+                    st.write("Correlation Matrix:")
+                    corr_matrix = numeric_df.corr()
+                    fig_corr = px.imshow(corr_matrix, text_auto=True)
+                    st.plotly_chart(fig_corr)
+                else:
+                    st.write("No numeric columns available for correlation analysis.")
                 
                 st.write("Data Distribution:")
                 column = st.selectbox("Select a column for distribution analysis", df.columns)
-                fig_dist = px.histogram(df, x=column, marginal="box")
-                st.plotly_chart(fig_dist)
+                if pd.api.types.is_numeric_dtype(df[column]):
+                    fig_dist = px.histogram(df, x=column, marginal="box")
+                    st.plotly_chart(fig_dist)
+                else:
+                    st.write(f"Selected column '{column}' is not numeric. Please select a numeric column for distribution analysis.")
 
         with tab5:
             st.subheader("Advanced Analysis")
