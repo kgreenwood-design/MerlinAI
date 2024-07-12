@@ -18,17 +18,13 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 import pickle
 import spacy
-import subprocess
-import sys
-
-def download_spacy_model(model_name):
-    subprocess.check_call([sys.executable, "-m", "spacy", "download", model_name])
+import spacy
 
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     print("Downloading spaCy model...")
-    download_spacy_model("en_core_web_sm")
+    spacy.cli.download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
 
 def plot_device_metrics(device_id):
