@@ -21,7 +21,8 @@ class FrontendStack(Stack):
     def __init__(self, scope: Construct, construct_id: str,
                  vpc: ec2.Vpc,
                  bedrock_agent_id: str,
-                 bedrock_agent_alias: str) -> None:
+                 bedrock_agent_alias: str,
+                 dynamodb_table: dynamodb.Table) -> None:
         super().__init__(scope, construct_id)
 
         platform_mapping = {
@@ -46,7 +47,7 @@ class FrontendStack(Stack):
                                     )
         app_execute_role.add_to_policy(
             iam.PolicyStatement(
-                actions=["bedrock:*"],
+                actions=["bedrock:*", "dynamodb:*"],
                 resources=["*"]
             )
         )
@@ -62,7 +63,8 @@ class FrontendStack(Stack):
                                                                                  task_role=app_execute_role,
                                                                                  environment={
                                                                                      "BEDROCK_AGENT_ID": bedrock_agent_id,
-                                                                                     "BEDROCK_AGENT_ALIAS": bedrock_agent_alias
+                                                                                     "BEDROCK_AGENT_ALIAS": bedrock_agent_alias,
+                                                                                     "DYNAMODB_TABLE_NAME": dynamodb_table.table_name
                                                                                  }
                                                                              ),
                                                                              task_subnets=ec2.SubnetSelection(
