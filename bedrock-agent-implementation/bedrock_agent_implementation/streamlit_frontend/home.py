@@ -236,10 +236,15 @@ authenticator = stauth.Authenticate(
 )
 BEDROCK_AGENT_ID = os.getenv('BEDROCK_AGENT_ID')
 BEDROCK_AGENT_ALIAS = os.getenv('BEDROCK_AGENT_ALIAS')
-DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME')
+DYNAMODB_TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'default_conversation_table')
 client = boto3.client('bedrock-agent-runtime')
 dynamodb = boto3.resource('dynamodb')
-conversation_table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+
+if DYNAMODB_TABLE_NAME:
+    conversation_table = dynamodb.Table(DYNAMODB_TABLE_NAME)
+else:
+    st.warning("DYNAMODB_TABLE_NAME environment variable is not set. Some features may not work correctly.")
+    conversation_table = None
 
 # Render the login widget
 authenticator.login()
@@ -387,21 +392,28 @@ def session_generator():
     return pattern
 
 def save_conversation(session_id, role, content):
-    conversation_table.put_item(
-        Item={
-            'session_id': session_id,
-            'timestamp': int(time.time() * 1000),
-            'role': role,
-            'content': content
-        }
-    )
+    if conversation_table:
+        conversation_table.put_item(
+            Item={
+                'session_id': session_id,
+                'timestamp': int(time.time() * 1000),
+                'role': role,
+                'content': content
+            }
+        )
+    else:
+        st.warning("Unable to save conversation: DynamoDB table not configured.")
 
 def get_conversation_history(session_id):
-    response = conversation_table.query(
-        KeyConditionExpression=Key('session_id').eq(session_id),
-        ScanIndexForward=True
-    )
-    return response['Items']
+    if conversation_table:
+        response = conversation_table.query(
+            KeyConditionExpression=Key('session_id').eq(session_id),
+            ScanIndexForward=True
+        )
+        return response['Items']
+    else:
+        st.warning("Unable to retrieve conversation history: DynamoDB table not configured.")
+        return []
 
 def main():
     # Check for session timeout
