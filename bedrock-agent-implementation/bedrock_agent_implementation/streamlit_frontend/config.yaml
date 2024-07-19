@@ -1,13 +1,9 @@
 credentials:
   usernames:
-    ProductSupport:
-      email: user1@example.com
-      name: Product Support Team 
-      password: Alog2024!
     Admin:
       email: user2@example.com
       name: Admin
-      password: Alog2024!
+      password: Admin
 
 cookie:
   expiry_days: 30
@@ -16,4 +12,4 @@ cookie:
 
 preauthorized:
   emails:
-    - kgreenwood4@yahoo.com
+    
